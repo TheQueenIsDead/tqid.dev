@@ -24,7 +24,7 @@
     {
       "matchManagers": ["docker-compose"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
+      "automerge": false // TODO: Enable when confident
     }
   ]
 }
