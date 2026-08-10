@@ -16,5 +16,5 @@ jobs:
       RECIPES_SECRET_KEY: ${{ secrets.recipes_secret_key }}
       RECIPES_POSTGRES_PASSWORD: ${{ secrets.recipes_postgres_password }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker compose -f docker/recipes.yml up --wait

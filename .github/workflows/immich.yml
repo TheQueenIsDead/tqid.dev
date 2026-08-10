@@ -22,5 +22,5 @@ jobs:
       # Please use only the characters `A-Za-z0-9`, without special characters or spaces
       DB_PASSWORD: ${{ secrets.IMMICH_DB_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker compose -f docker/immich.yml up --wait
