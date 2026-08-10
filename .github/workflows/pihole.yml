@@ -13,5 +13,5 @@ jobs:
   pihole:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker compose -f docker/pihole.yml up --wait

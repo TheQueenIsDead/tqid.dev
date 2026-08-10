@@ -15,5 +15,5 @@ jobs:
     env:
       CLOUDFLARE_TOKEN: ${{ secrets.cloudflare_token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker compose -f docker/cloudflare.yml up --wait

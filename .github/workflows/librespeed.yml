@@ -13,5 +13,5 @@ jobs:
   librespeed:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker compose -f docker/librespeed.yml up --wait

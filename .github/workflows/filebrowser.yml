@@ -16,5 +16,5 @@ jobs:
       CONFIG_FOLDER: "/mnt/unitek/config"
       FILES_FOLDER: "/mnt/unitek/files"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker compose -f docker/filebrowser.yml up --wait

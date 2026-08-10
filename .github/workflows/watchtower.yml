@@ -16,5 +16,5 @@ jobs:
       WATCHTOWER_DISCORD_TOKEN: ${{ secrets.WATCHTOWER_DISCORD_TOKEN }}
       WATCHTOWER_DISCORD_WEBHOOKID: ${{ secrets.WATCHTOWER_DISCORD_WEBHOOKID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker compose -f docker/watchtower.yml up --wait

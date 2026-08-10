@@ -17,5 +17,5 @@ jobs:
       GRAFANA_FLEET_TOKEN: ${{ secrets.GRAFANA_FLEET_TOKEN }}
       GRAFANA_COLLECTOR_TOKEN: ${{ secrets.GRAFANA_COLLECTOR_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker compose -f docker/alloy.yml up --wait
