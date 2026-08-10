@@ -4,5 +4,13 @@
     "config:recommended"
   ],
   // https://docs.renovatebot.com/configuration-options/#minimumreleaseage
-  "minimumReleaseAge": "7 days"
+  "minimumReleaseAge": "7 days",
+
+  // https://docs.renovatebot.com/modules/manager/
+  "docker-compose": {
+    // https://docs.renovatebot.com/modules/manager/#extending-a-managers-default-managerfilepatterns
+    "managerFilePatterns": [
+      "/docker/*.ya?ml$"
+    ]
+  }
 }
