@@ -1,9 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    "config:disableRateLimiting",
   ],
-  // https://docs.renovatebot.com/configuration-options/#minimumreleaseage
+  // https://docs.renovatebot.com/configuration-options
   "minimumReleaseAge": "7 days",
 
   // https://docs.renovatebot.com/modules/manager/
@@ -15,5 +16,15 @@
       // All compose files in the docker folder
       "/^docker/[^/]+\\.ya?ml$/"
     ]
-  }
+  },
+
+
+  "packageRules": [
+    {
+      "matchManagers": ["docker-compose"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    }
+  ]
+
 }
