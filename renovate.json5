@@ -2,7 +2,8 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    "config:disableRateLimiting",
+    // https://docs.renovatebot.com/presets-default/#disableratelimiting
+    ":disableRateLimiting",
   ],
   // https://docs.renovatebot.com/configuration-options
   "minimumReleaseAge": "7 days",
@@ -26,5 +27,4 @@
       "automerge": true
     }
   ]
-
 }
