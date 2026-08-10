@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   librespeed:
-    image: "lscr.io/linuxserver/librespeed:latest"
+    image: "lscr.io/linuxserver/librespeed:6.2.0"
     container_name: "librespeed"
     restart: "unless-stopped"
     environment:

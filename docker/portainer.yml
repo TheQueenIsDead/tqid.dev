@@ -3,7 +3,7 @@ name: "portainer"
 services:
   portainer:
     container_name: "portainer"
-    image: "portainer/portainer-ce:lts"
+    image: "portainer/portainer-ce:2.44.0-alpine"
     restart: "unless-stopped"
     environment:
       TRUSTED_ORIGINS: "portainer.tqid.dev"

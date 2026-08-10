@@ -3,6 +3,7 @@ version: "3.8"
 services:
   budge:
     image: "thequeenisdead/budge:latest"
+    pull_policy: "always"
     restart: "unless-stopped"
     environment:
       BUDGE_BOLT_PATH: "/var/lib/budge"
@@ -17,6 +18,7 @@ services:
 
   chat:
     image: "thequeenisdead/go-chat:latest"
+    pull_policy: "always"
     restart: "unless-stopped"
     expose:
       - "8080"

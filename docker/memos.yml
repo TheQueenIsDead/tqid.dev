@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   memos:
-    image: "neosmemo/memos:stable"
+    image: "neosmemo/memos:0.30.0"
     container_name: "memos"
     restart: "unless-stopped"
     volumes:

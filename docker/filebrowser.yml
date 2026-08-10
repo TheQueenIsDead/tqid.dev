@@ -2,7 +2,7 @@ name: "filebrowser"
 
 services:
   filebrowser:
-    image: "filebrowser/filebrowser"
+    image: "filebrowser/filebrowser:v2.63.23"
     environment:
       PUID: "1000"
       PGID: "1000"
