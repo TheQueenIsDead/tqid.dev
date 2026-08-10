@@ -10,7 +10,8 @@
   "docker-compose": {
     // https://docs.renovatebot.com/modules/manager/#extending-a-managers-default-managerfilepatterns
     "managerFilePatterns": [
-      "/docker/*.ya?ml$"
+      // All files in the docker folder
+      "/^\/docker\/[a-z]+\.yml$/"
     ]
   }
 }
