@@ -25,6 +25,17 @@
       "matchManagers": ["docker-compose"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": false // TODO: Enable when confident
+    },
+    // Ignore versions 14 and 20, as these are remnants of whe the tag was attributed to the Ubuntu version
+    // https://github.com/linuxserver/docker-qbittorrent/issues/448#issuecomment-4979556016
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/linuxserver/qbittorrent"
+      ],
+      "allowedVersions": "!/^(14|20)\\./"
     }
   ]
 }
