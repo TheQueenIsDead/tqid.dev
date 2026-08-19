@@ -6,7 +6,7 @@ services:
     image: "portainer/portainer-ce:2.44.0-alpine"
     restart: "unless-stopped"
     environment:
-      TRUSTED_ORIGINS: "portainer.tqid.dev"
+      TRUSTED_ORIGINS: "https://portainer.tqid.dev"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "portainer_data:/data"
