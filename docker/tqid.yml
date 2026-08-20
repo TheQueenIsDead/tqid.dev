@@ -17,7 +17,7 @@ services:
       - "traefik.http.routers.budge.entrypoints=web"
 
   chat:
-    image: "thequeenisdead/go-chat:latest"
+    image: "ghcr.io/thequeenisdead/go-chat:1.2.0"
     pull_policy: "always"
     restart: "unless-stopped"
     expose:
