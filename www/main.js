@@ -7,9 +7,18 @@ const LANG_COLORS = {
   Rust:       '#dea584',
   CSS:        '#563d7c',
   Shell:      '#89e051',
+  Dart:       '#00b4ab',
 };
 
 const FALLBACK_REPOS = [
+  {
+    name: 'calora',
+    description: '🍏 Flutter nutrition tracker with NZ/AU food database, recipes, and barcode lookup.',
+    html_url: 'https://github.com/TheQueenIsDead/calora',
+    stargazers_count: 1,
+    language: 'Dart',
+    homepage: '',
+  },
   {
     name: 'budge',
     description: '🐦 A budget and asset manager for self-hosting Kiwis',
@@ -19,33 +28,33 @@ const FALLBACK_REPOS = [
     homepage: '',
   },
   {
-    name: 'DNSCDN',
+    name: 'dnscdn',
     description: '📁 A CLI tool written in Go for storing and retrieving files on the Domain Name System',
-    html_url: 'https://github.com/TheQueenIsDead/DNSCDN',
+    html_url: 'https://github.com/TheQueenIsDead/dnscdn',
     stargazers_count: 2,
     language: 'Go',
     homepage: '',
   },
   {
     name: 'QCKSCRL',
-    description: 'A lightweight keyboard-driven quick-scroll utility built for the browser.',
+    description: '📷 A browser based carousel composer for social media',
     html_url: 'https://github.com/TheQueenIsDead/QCKSCRL',
     stargazers_count: 0,
-    language: 'HTML',
-    homepage: null,
+    language: 'JavaScript',
+    homepage: 'https://scrl.tqid.dev/',
   },
   {
     name: 'QCKCUT',
     description: '🎥 A browser movie editor for clipping and sequencing video highlights',
     html_url: 'https://github.com/TheQueenIsDead/QCKCUT',
     stargazers_count: 0,
-    language: 'Javascript',
-    homepage: null,
+    language: 'JavaScript',
+    homepage: 'https://cut.tqid.dev/',
   },
   {
-    name: 'GoPhormula',
+    name: 'gophormula',
     description: '🏎️ Golang utilities for everything Formula 1',
-    html_url: 'https://github.com/TheQueenIsDead/GoPhormula',
+    html_url: 'https://github.com/TheQueenIsDead/gophormula',
     stargazers_count: 0,
     language: 'Go',
     homepage: '',
@@ -79,9 +88,12 @@ document.addEventListener('alpine:init', () => {
     },
 
     get primaryLang() {
-      const goCount = this.repos.filter(r => r.language === 'Go').length;
-      const langs = [...new Set(this.repos.map(r => r.language).filter(Boolean))];
-      return goCount > this.repos.length / 2 ? 'Go' : langs[0] || '—';
+      const counts = {};
+      for (const r of this.repos) {
+        if (r.language) counts[r.language] = (counts[r.language] || 0) + 1;
+      }
+      const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      return ranked.length ? ranked[0][0] : '—';
     },
 
     langColor(lang) {
