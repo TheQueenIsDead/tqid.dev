@@ -68,7 +68,7 @@ const FALLBACK_REPOS = [
   },
 ];
 
-const REPO_NAMES = ['Calora', 'Budge', 'DNSCDN', 'QCKSCRL', 'GoPhormula', 'go-chat', 'gupdit'];
+const REPO_NAMES = ['Calora', 'Budge', 'DNSCDN', 'QCKSCRL', 'QCKCUT', 'GoPhormula', 'go-chat', 'gupdit'];
 
 document.addEventListener('alpine:init', () => {
   Alpine.data('app', () => ({
