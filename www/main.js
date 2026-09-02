@@ -35,6 +35,14 @@ const FALLBACK_REPOS = [
     homepage: null,
   },
   {
+    name: 'QCKCUT',
+    description: '🎥 A browser movie editor for clipping and sequencing video highlights',
+    html_url: 'https://github.com/TheQueenIsDead/QCKCUT',
+    stargazers_count: 0,
+    language: 'Javascript',
+    homepage: null,
+  },
+  {
     name: 'GoPhormula',
     description: '🏎️ Golang utilities for everything Formula 1',
     html_url: 'https://github.com/TheQueenIsDead/GoPhormula',
