@@ -20,7 +20,7 @@ services:
       - "2283:2283" # Expose post to host for local network access
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.photos.rule=Host(`photos.tqid.dev` || `photos-pandolin.tqid.dev`)"
+      - "traefik.http.routers.photos.rule=Host(`photos.tqid.dev`) || Host(`photos-pandolin.tqid.dev`)"
       - "traefik.http.routers.photos.entrypoints=web"
     depends_on:
       - redis
