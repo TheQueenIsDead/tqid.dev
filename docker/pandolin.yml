@@ -1,0 +1,19 @@
+name: "pandolin"
+
+services:
+  newt:
+    image: "fosrl/newt:1.16.0"
+    container_name: "newt"
+    restart: "unless-stopped"
+    environment:
+      - "PANGOLIN_ENDPOINT=https://app.pangolin.net"
+      - "NEWT_ID=${NEWT_ID}"
+      - "NEWT_SECRET=${NEWT_SECRET}"
+    networks:
+      - "shared"
+
+networks:
+  default:
+  shared:
+    name: docker_default
+    external: true

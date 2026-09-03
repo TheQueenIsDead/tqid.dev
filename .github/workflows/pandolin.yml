@@ -1,0 +1,20 @@
+name: "Pandolin"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/pandolin.yml
+      - docker/pandolin.yml
+    branches:
+      - main
+
+jobs:
+  pandolin:
+    runs-on: self-hosted
+    env:
+      NEWT_ID: ${{ secrets.PANDOLIN_NEWT_ID }}
+      NEWT_SECRET: ${{ secrets.PANDOLIN_NEWT_SECRET }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker compose -f docker/pandolin.yml up --wait
