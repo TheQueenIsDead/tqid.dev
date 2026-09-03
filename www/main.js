@@ -1,103 +1,47 @@
-const LANG_COLORS = {
-  Go:         '#00ADD8',
-  HTML:       '#e34c26',
-  JavaScript: '#f1e05a',
-  TypeScript: '#3178c6',
-  Python:     '#3572a5',
-  Rust:       '#dea584',
-  CSS:        '#563d7c',
-  Shell:      '#89e051',
-  Dart:       '#00b4ab',
-};
+const GITHUB_USER = 'TheQueenIsDead';
 
-const FALLBACK_REPOS = [
-  {
-    name: 'calora',
-    description: '🍏 Flutter nutrition tracker with NZ/AU food database, recipes, and barcode lookup.',
-    html_url: 'https://github.com/TheQueenIsDead/calora',
-    stargazers_count: 1,
-    language: 'Dart',
-    homepage: '',
-  },
-  {
-    name: 'budge',
-    description: '🐦 A budget and asset manager for self-hosting Kiwis',
-    html_url: 'https://github.com/TheQueenIsDead/budge',
-    stargazers_count: 3,
-    language: 'Go',
-    homepage: '',
-  },
-  {
-    name: 'dnscdn',
-    description: '📁 A CLI tool written in Go for storing and retrieving files on the Domain Name System',
-    html_url: 'https://github.com/TheQueenIsDead/dnscdn',
-    stargazers_count: 2,
-    language: 'Go',
-    homepage: '',
-  },
-  {
-    name: 'QCKSCRL',
-    description: '📷 A browser based carousel composer for social media',
-    html_url: 'https://github.com/TheQueenIsDead/QCKSCRL',
-    stargazers_count: 0,
-    language: 'JavaScript',
-    homepage: 'https://scrl.tqid.dev/',
-  },
-  {
-    name: 'QCKCUT',
-    description: '🎥 A browser movie editor for clipping and sequencing video highlights',
-    html_url: 'https://github.com/TheQueenIsDead/QCKCUT',
-    stargazers_count: 0,
-    language: 'JavaScript',
-    homepage: 'https://cut.tqid.dev/',
-  },
-  {
-    name: 'gophormula',
-    description: '🏎️ Golang utilities for everything Formula 1',
-    html_url: 'https://github.com/TheQueenIsDead/gophormula',
-    stargazers_count: 0,
-    language: 'Go',
-    homepage: '',
-  },
-  {
-    name: 'go-chat',
-    description: '💬 A chatroom implemented in Go with NATS and Datastar',
-    html_url: 'https://github.com/TheQueenIsDead/go-chat',
-    stargazers_count: 0,
-    language: 'Go',
-    homepage: 'https://chat.tqid.dev/',
-  },
-  {
-    name: 'gupdit',
-    description: '⬆️ Check for software updates via Git at runtime',
-    html_url: 'https://github.com/TheQueenIsDead/gupdit',
-    stargazers_count: 1,
-    language: null,
-    homepage: '',
-  },
-];
-
-const REPO_NAMES = ['Calora', 'Budge', 'DNSCDN', 'QCKSCRL', 'QCKCUT', 'GoPhormula', 'go-chat', 'gupdit'];
-
-document.addEventListener('alpine:init', () => {
-  Alpine.data('app', () => ({
-    repos: FALLBACK_REPOS,
+// Invoked from x-data in index.html, which lists the projects to feature;
+// x-init then calls load() to refresh them from the GitHub API.
+function app(pinned) {
+  return {
+    repos: pinned.map(r => ({ html_url: `https://github.com/${GITHUB_USER}/${r.name}`, ...r })),
 
     get totalStars() {
       return this.repos.reduce((sum, r) => sum + (r.stargazers_count || 0), 0);
     },
 
+    get liveSites() {
+      return this.repos.filter(r => r.homepage).length;
+    },
+
+    // Most-used language across the displayed projects. Each project is
+    // weighted equally, so one big repo cannot outvote all the others.
     get primaryLang() {
-      const counts = {};
-      for (const r of this.repos) {
-        if (r.language) counts[r.language] = (counts[r.language] || 0) + 1;
+      const totals = {};
+      for (const repo of this.repos) {
+        for (const lang of this.breakdown(repo)) {
+          totals[lang.name] = (totals[lang.name] || 0) + Number(lang.percent);
+        }
       }
-      const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const ranked = Object.entries(totals).sort((a, b) => b[1] - a[1]);
       return ranked.length ? ranked[0][0] : '—';
     },
 
-    langColor(lang) {
-      return LANG_COLORS[lang] || '#71717a';
+    // Bytes per language for one repo, or a single unit for its primary
+    // language until load() has fetched the real numbers.
+    bytes(repo) {
+      return repo.languages || (repo.language ? { [repo.language]: 1 } : {});
+    },
+
+    // GitHub-style language split for one repo.
+    breakdown(repo) {
+      const bytes = this.bytes(repo);
+      const total = Object.values(bytes).reduce((sum, n) => sum + n, 0);
+      if (!total) return [];
+
+      return Object.entries(bytes)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, n]) => ({ name, percent: (n / total * 100).toFixed(1) }));
     },
 
     onMouseMove(event, el) {
@@ -106,20 +50,25 @@ document.addEventListener('alpine:init', () => {
       el.style.setProperty('--my', ((event.clientY - r.top) / r.height * 100) + '%');
     },
 
-    async init() {
-      try {
-        const results = await Promise.all(
-          REPO_NAMES.map(name =>
-            fetch(`https://api.github.com/repos/TheQueenIsDead/${name}`, {
-              headers: { Accept: 'application/vnd.github.v3+json' },
-            })
-              .then(r => r.ok ? r.json() : null)
-              .catch(() => null)
-          )
-        );
-        const live = results.filter(Boolean);
-        if (live.length > 0) this.repos = live;
-      } catch {}
+    async load() {
+      const res = await fetch(
+        `https://api.github.com/users/${GITHUB_USER}/repos?per_page=100&sort=pushed`,
+        { headers: { Accept: 'application/vnd.github.v3+json' } },
+      ).catch(() => null);
+      if (!res || !res.ok) return;
+
+      // Only the repos listed in the markup are shown; the API just refreshes
+      // them. Merging rather than replacing keeps the seeded language bytes.
+      const live = await res.json();
+      this.repos = this.repos.map(r => ({ ...r, ...live.find(l => l.name === r.name) }));
+
+      // Per-repo language bytes. Skipped silently when rate limited, leaving
+      // breakdown() on its single-language fallback.
+      await Promise.all(this.repos.map(async (repo) => {
+        if (!repo.languages_url) return;
+        const res = await fetch(repo.languages_url).catch(() => null);
+        if (res && res.ok) repo.languages = await res.json().catch(() => null);
+      }));
     },
-  }));
-});
+  };
+}

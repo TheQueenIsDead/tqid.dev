@@ -39,7 +39,7 @@ body {
     var(--bg);
 }
 
-.container {
+.app {
   max-width: 1000px;
   margin: 0 auto;
   padding: 0 1.5rem;
@@ -137,8 +137,9 @@ header {
 /* ── Stats row ── */
 .stats-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 2.5rem;
+  gap: 1rem 2.5rem;
   padding: 1.5rem 0 2.5rem;
 }
 
@@ -243,6 +244,19 @@ header {
   font-weight: 600;
   color: var(--text-1);
   line-height: 1.3;
+  text-decoration: none;
+}
+
+/* Stretches the repo link over the whole card, under the live badge. */
+.card-name::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.card:focus-within {
+  background: var(--surface-hover);
 }
 
 .badges {
@@ -264,6 +278,24 @@ header {
   color: var(--green);
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  text-decoration: none;
+  position: relative;
+  z-index: 2;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.live-badge:hover,
+.live-badge:focus-visible {
+  background: var(--green-border);
+  border-color: var(--green);
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.35);
+  transform: translateY(-1px);
+}
+
+.live-badge:hover .live-dot {
+  animation: none;
+  opacity: 1;
+  box-shadow: 0 0 6px var(--green);
 }
 
 .live-dot {
@@ -313,6 +345,78 @@ header {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* GitHub-style language split, one segment per language. */
+.lang-bar {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--border);
+  margin-top: 0.25rem;
+  /* Above .card-name::after, so segments stay hoverable. */
+  position: relative;
+  z-index: 2;
+}
+
+.lang-bar > * {
+  position: relative;
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* Widens the hover target beyond the 6px bar. */
+.lang-bar > *::before {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.lang-bar > *::after {
+  content: attr(data-lang) ' ' attr(data-percent) '%';
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%) translateY(3px);
+  padding: 0.22rem 0.45rem;
+  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border-hover);
+  color: var(--text-1);
+  font-size: 0.68rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.lang-bar > *:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.lang-color {
+  background: #71717a;
+}
+
+.lang-color[data-lang="Go"]         { background: #00add8; }
+.lang-color[data-lang="Go Template"] { background: #00add8; }
+.lang-color[data-lang="HTML"]       { background: #e34c26; }
+.lang-color[data-lang="JavaScript"] { background: #f1e05a; }
+.lang-color[data-lang="TypeScript"] { background: #3178c6; }
+.lang-color[data-lang="Python"]     { background: #3572a5; }
+.lang-color[data-lang="Rust"]       { background: #dea584; }
+.lang-color[data-lang="CSS"]        { background: #563d7c; }
+.lang-color[data-lang="Shell"]      { background: #89e051; }
+.lang-color[data-lang="Dart"]       { background: #00b4ab; }
+.lang-color[data-lang="Kotlin"]     { background: #a97bff; }
+.lang-color[data-lang="Swift"]      { background: #f05138; }
+.lang-color[data-lang="Objective-C"] { background: #438eff; }
+.lang-color[data-lang="Nix"]        { background: #7e7eff; }
+.lang-color[data-lang="HCL"]        { background: #844fba; }
+.lang-color[data-lang="C++"]        { background: #f34b7d; }
+.lang-color[data-lang="Dockerfile"] { background: #384d54; }
 
 .stars {
   display: inline-flex;
