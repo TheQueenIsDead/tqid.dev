@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   budge:
-    image: "ghcr.io/thequeenisdead/budge:1.14.1"
+    image: "ghcr.io/thequeenisdead/budge:1.15.0"
     pull_policy: "always"
     restart: "unless-stopped"
     environment:
