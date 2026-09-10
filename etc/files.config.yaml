@@ -1,0 +1,7 @@
+# https://filebrowserquantum.com/en/docs/getting-started/config/
+server:
+  cacheDir: /home/filebrowser/data/tmp # using the data volume so it can persist across restarts
+  sources:
+    - path: /folder # Do not use a root "/" directory or include the "/var" folder
+      config:
+        defaultEnabled: true

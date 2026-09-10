@@ -31,8 +31,12 @@ services:
     expose:
       - "80"
     volumes:
+      # File Store (Uses same filebrowser folder as previous non quantum install)
       - "${FILES_FOLDER}/filebrowser:/folder"
+      # Database and Cache (`tmp`) per etc/files/config.yaml
       - "${CONFIG_FOLDER}/files:/home/filebrowser/data"
+      # Default: https://filebrowserquantum.com/en/docs/getting-started/config/#3-default-locations
+      - "../etc/files.config.yaml:/home/filebrowser/data/config.yaml"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.files.rule=Host(`files.tqid.dev`)"
