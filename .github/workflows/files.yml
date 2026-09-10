@@ -1,11 +1,11 @@
-name: "FileBrowser"
+name: "Files"
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - .github/workflows/filebrowser.yml
-      - docker/filebrowser.yml
+      - .github/workflows/files.yml
+      - docker/files.yml
     branches:
       - main
 
@@ -17,4 +17,4 @@ jobs:
       FILES_FOLDER: "/mnt/unitek/files"
     steps:
       - uses: actions/checkout@v7
-      - run: docker compose -f docker/filebrowser.yml up --wait
+      - run: docker compose -f docker/files.yml up --wait

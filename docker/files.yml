@@ -19,6 +19,25 @@ services:
       - "traefik.http.routers.filebrowser.rule=Host(`filebrowser.tqid.dev`)"
       - "traefik.http.routers.filebrowser.entrypoints=web"
 
+  # https://filebrowserquantum.com/en/
+  files:
+    image: "gtstef/filebrowser:beta"
+    restart: "unless-stopped"
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+    networks:
+      - shared
+    expose:
+      - "80"
+    volumes:
+      - "${FILES_FOLDER}/filebrowser:/folder"
+      - "${CONFIG_FOLDER}/files:/home/filebrowser/data"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.files.rule=Host(`files.tqid.dev`)"
+      - "traefik.http.routers.files.entrypoints=web"
+
 networks:
   shared:
     name: docker_default
