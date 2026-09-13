@@ -28,6 +28,8 @@ services:
       PGID: "1000"
     networks:
       - shared
+    ports:
+      - "5904:80"
     expose:
       - "80"
     volumes:
