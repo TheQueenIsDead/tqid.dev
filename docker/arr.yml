@@ -69,7 +69,7 @@ services:
       - shared
 
   sportarr:
-    image: "sportarr/sportarr:4.1.6.1116"
+    image: "sportarr/sportarr:4.1.7.1117"
     container_name: "sportarr"
     restart: "unless-stopped"
     environment:
