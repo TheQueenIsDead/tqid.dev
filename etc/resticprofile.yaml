@@ -1,0 +1,123 @@
+# Restic backups for the NUC, driven by resticprofile.
+#
+# This file is the source of truth. It is deployed to /etc/resticprofile/profiles.yaml
+# by .github/workflows/restic.yml, which then runs `resticprofile schedule --all` to
+# (re)install the systemd timers. The host runs the backups on its own timers, so they
+# keep happening even when GitHub or the self-hosted runner is down.
+#
+# Secrets are NOT in here. RESTIC_PASSWORD, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+# are written to /etc/resticprofile/env (0600, root) from GitHub secrets. See docs/BACKUP.md.
+version: "1"
+
+global:
+  default-command: "snapshots"
+  # Backups are a background chore, they shouldn't fight the media stack for CPU or disk
+  priority: "low"
+  ionice: true
+  ionice-class: 2
+  ionice-level: 7
+  # The NUC reboots often enough to leave locks behind from a killed backup
+  restic-stale-lock-age: "2h"
+
+# Shared settings. Every profile below inherits these.
+default:
+  # Backblaze B2 through its S3 compatible API - restic recommends this over the native
+  # b2: backend: https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html#backblaze-b2
+  # The region has to match the bucket's, which is shown next to the bucket in the B2 UI.
+  repository: "s3:s3.us-west-004.backblazeb2.com/tqid-dev-backup"
+  env-file: "/etc/resticprofile/env"
+  initialize: true
+  force-inactive-lock: true
+  status-file: "/var/lib/resticprofile/status.json"
+
+  backup:
+    verbose: true
+    one-file-system: true
+    exclude-caches: true
+    # A backup is worth more than a clean exit code - don't fail the run because a
+    # container had a file open and restic couldn't read it
+    no-error-on-warning: true
+    schedule-permission: "system"
+    schedule-lock-mode: "default"
+    schedule-lock-wait: "1h"
+    schedule-log: "/var/log/resticprofile/{{ .Profile.Name }}.log"
+
+  retention:
+    after-backup: true
+    keep-daily: 7
+    keep-weekly: 4
+    keep-monthly: 12
+    keep-yearly: 3
+    # Scope forget to this profile's own snapshots so one profile can't expire another's
+    tag: true
+    host: true
+    path: false
+    prune: true
+
+# Everything that lives on the NUC itself: the docker named volumes (memos, actual,
+# budge, pihole, mealie-data, librespeed, portainer_data) plus the bind-mounted app
+# config and file store on the Unitek drive.
+nuc:
+  inherit: "default"
+  backup:
+    tag:
+      - "nuc"
+    source:
+      - "/var/lib/docker/volumes"
+      - "/mnt/unitek/config"
+      - "/mnt/unitek/files"
+    exclude:
+      # Docker's own scratch, not data
+      - "/var/lib/docker/volumes/backingFsBlockDev"
+      - "/var/lib/docker/volumes/metadata.db"
+      # Regenerable caches and transcodes - large, and worthless in a restore
+      - "/mnt/unitek/config/jellyfin/cache"
+      - "/mnt/unitek/config/jellyfin/data/transcodes"
+      - "/mnt/unitek/config/jellyfin/data/subtitles"
+      - "/mnt/unitek/config/tdarr/cache"
+      - "/mnt/unitek/config/tdarr/logs"
+      - "/mnt/unitek/config/qbittorrent/data/logs"
+      - "/mnt/unitek/config/files/tmp"
+      - "**/*.log"
+      - "**/.cache"
+    schedule:
+      - "*-*-* 02:00:00"
+
+# Immich is split out: the library is large and slow to push, and the database has to
+# be dumped rather than copied - a live postgres data directory does not restore.
+immich:
+  inherit: "default"
+  run-before:
+    - "mkdir -p /mnt/unitek/immich/dump"
+    # Atomic write, so a failed dump can never overwrite the last good one
+    - "sh -c 'docker exec -t immich_postgres pg_dumpall --clean --if-exists --username=postgres > /mnt/unitek/immich/dump/immich.sql.tmp && mv /mnt/unitek/immich/dump/immich.sql.tmp /mnt/unitek/immich/dump/immich.sql'"
+  backup:
+    tag:
+      - "immich"
+    source:
+      - "/mnt/unitek/immich/dump"
+      - "/mnt/unitek/immich/library"
+    exclude:
+      # Immich regenerates both of these from the originals
+      - "/mnt/unitek/immich/library/thumbs"
+      - "/mnt/unitek/immich/library/encoded-video"
+    schedule:
+      - "*-*-* 03:00:00"
+
+# Repository integrity. Structure weekly, plus a slice of the actual pack data, so bit
+# rot at B2 surfaces here rather than during a restore.
+maintenance:
+  inherit: "default"
+  initialize: false
+  check:
+    read-data-subset: "5%"
+    schedule:
+      - "Sun *-*-* 05:00:00"
+    schedule-permission: "system"
+    schedule-lock-wait: "2h"
+    schedule-log: "/var/log/resticprofile/maintenance.log"
+
+groups:
+  all:
+    - "nuc"
+    - "immich"
