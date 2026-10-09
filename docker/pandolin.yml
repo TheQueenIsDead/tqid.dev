@@ -2,7 +2,7 @@ name: "pandolin"
 
 services:
   newt:
-    image: "fosrl/newt:1.17.0"
+    image: "fosrl/newt:1.18.1"
     container_name: "newt"
     restart: "unless-stopped"
     environment:
