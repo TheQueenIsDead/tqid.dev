@@ -21,15 +21,12 @@ services:
       # Host filesystems for node metrics
       - '/proc:/host/proc:ro'
       - '/sys:/host/sys:ro'
-      - '/:/host/root:ro,rslave'
+      # Docker is snap-installed, so dockerd's / is the snap base image; the real host root is exposed at hostfs
+      - '/var/lib/snapd/hostfs:/host/root:ro'
       # systemd journal for syslogs
       - '/var/log/journal:/var/log/journal:ro'
       - '/run/log/journal:/run/log/journal:ro'
       - '/etc/machine-id:/etc/machine-id:ro'
-      # cAdvisor container disk usage. Docker is snap-installed; cAdvisor reads the
-      # data root reported by `docker info`, so it must be mounted at the same path.
-      - '/var/snap/docker/common/var-lib-docker:/var/snap/docker/common/var-lib-docker:ro'
-      - '/dev/disk:/dev/disk:ro'
     # Host namespaces so node metrics (notably network traffic) reflect the host, not the container
     network_mode: host
     pid: host
