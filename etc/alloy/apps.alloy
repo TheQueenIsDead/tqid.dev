@@ -1,0 +1,85 @@
+// Application metrics endpoints -> Prometheus
+//
+// Opt a container in with Docker labels:
+//   alloy.metrics.scrape=true
+//   alloy.metrics.port=<port>
+//   alloy.metrics.path=/metrics   (optional, defaults to /metrics)
+//
+// Only the golden-signal allowlist below is kept; extend it when adding apps.
+// Containers attached to several networks will be scraped once per network.
+
+discovery.docker "apps" {
+  host = "unix:///var/run/docker.sock"
+
+  filter {
+    name   = "label"
+    values = ["alloy.metrics.scrape=true"]
+  }
+}
+
+discovery.relabel "apps" {
+  targets = discovery.docker.apps.targets
+
+  // Address the container directly on its network IP; Alloy runs with host networking.
+  rule {
+    source_labels = ["__meta_docker_network_ip", "__meta_docker_container_label_alloy_metrics_port"]
+    separator     = ":"
+    target_label  = "__address__"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_alloy_metrics_path"]
+    regex         = "(.+)"
+    target_label  = "__metrics_path__"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "instance"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "job"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "compose_project"
+  }
+}
+
+prometheus.scrape "apps" {
+  targets         = discovery.relabel.apps.output
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.apps.receiver]
+}
+
+prometheus.relabel "apps" {
+  rule {
+    source_labels = ["__name__"]
+    action        = "keep"
+    regex         = string.join([
+      "up",
+      // Generic HTTP (Prometheus client and OpenTelemetry conventions). Histogram
+      // buckets are dropped; sum/count still give rate, errors and mean latency.
+      "http_requests_total",
+      "http_request_duration_seconds_(sum|count)",
+      "http_server_request_duration_seconds_(sum|count)",
+      "process_cpu_seconds_total",
+      "process_resident_memory_bytes",
+      "go_goroutines",
+      // Traefik: per-service traffic/errors, entrypoint-level latency histogram for p95/p99.
+      "traefik_(entrypoint|service)_requests_total",
+      "traefik_service_request_duration_seconds_(sum|count)",
+      "traefik_entrypoint_request_duration_seconds_bucket",
+      "traefik_open_connections",
+      // Cloudflared tunnel
+      "cloudflared_tunnel_(total_requests|request_errors|response_by_code|ha_connections|concurrent_requests_per_tunnel)",
+      "quic_client_latest_rtt",
+    ], "|")
+  }
+
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}

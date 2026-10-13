@@ -6,7 +6,7 @@ on:
     paths:
       - .github/workflows/alloy.yml
       - docker/alloy.yml
-      - etc/config.alloy
+      - etc/alloy/**
     branches:
       - main
 
@@ -14,8 +14,11 @@ jobs:
   alloy:
     runs-on: self-hosted
     env:
-      GRAFANA_FLEET_TOKEN: ${{ secrets.GRAFANA_FLEET_TOKEN }}
-      GRAFANA_COLLECTOR_TOKEN: ${{ secrets.GRAFANA_COLLECTOR_TOKEN }}
+      GRAFANA_CLOUD_TOKEN: ${{ secrets.GRAFANA_CLOUD_TOKEN }}
+      GRAFANA_LOKI_URL: ${{ vars.GRAFANA_LOKI_URL }}
+      GRAFANA_LOKI_USERNAME: ${{ vars.GRAFANA_LOKI_USERNAME }}
+      GRAFANA_PROMETHEUS_URL: ${{ vars.GRAFANA_PROMETHEUS_URL }}
+      GRAFANA_PROMETHEUS_USERNAME: ${{ vars.GRAFANA_PROMETHEUS_USERNAME }}
     steps:
       - uses: actions/checkout@v7
       - run: docker compose -f docker/alloy.yml up --wait

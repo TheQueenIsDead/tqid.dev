@@ -1,0 +1,30 @@
+// Host syslogs (systemd journal) -> Loki
+
+loki.relabel "journal" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+
+  rule {
+    source_labels = ["__journal_syslog_identifier"]
+    target_label  = "syslog_identifier"
+  }
+
+  rule {
+    source_labels = ["__journal_priority_keyword"]
+    target_label  = "level"
+  }
+}
+
+loki.source.journal "host" {
+  max_age       = "12h"
+  relabel_rules = loki.relabel.journal.rules
+  labels        = {
+    job      = "integrations/node_exporter",
+    instance = constants.hostname,
+  }
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
