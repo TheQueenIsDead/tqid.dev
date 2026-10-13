@@ -2,67 +2,67 @@
 // ~10 series per container.
 
 prometheus.exporter.cadvisor "containers" {
-  docker_host                  = "unix:///var/run/docker.sock"
-  docker_only                  = true
-  store_container_labels       = false
-  allowlisted_container_labels = ["com.docker.compose.project", "com.docker.compose.service"]
-  enabled_metrics              = ["cpu", "memory", "network", "diskIO"]
+	docker_host                  = "unix:///var/run/docker.sock"
+	docker_only                  = true
+	store_container_labels       = false
+	allowlisted_container_labels = ["com.docker.compose.project", "com.docker.compose.service"]
+	enabled_metrics              = ["cpu", "memory", "network", "diskIO"]
 }
 
 prometheus.scrape "cadvisor" {
-  targets         = prometheus.exporter.cadvisor.containers.targets
-  job_name        = "integrations/cadvisor"
-  scrape_interval = "60s"
-  forward_to      = [prometheus.relabel.cadvisor.receiver]
+	targets         = prometheus.exporter.cadvisor.containers.targets
+	job_name        = "integrations/cadvisor"
+	scrape_interval = "60s"
+	forward_to      = [prometheus.relabel.cadvisor.receiver]
 }
 
 prometheus.relabel "cadvisor" {
-  rule {
-    source_labels = ["__name__"]
-    action        = "keep"
-    regex         = string.join([
-      // Utilisation
-      "container_cpu_usage_seconds_total",
-      "container_memory_working_set_bytes",
-      "container_network_(receive|transmit)_bytes_total",
-      "container_fs_(reads|writes)_bytes_total",
-      // Saturation
-      "container_cpu_cfs_throttled_seconds_total",
-      "container_spec_memory_limit_bytes",
-      // Errors
-      "container_network_(receive|transmit)_errors_total",
-      // Restarts
-      "container_start_time_seconds",
-    ], "|")
-  }
+	rule {
+		source_labels = ["__name__"]
+		action        = "keep"
+		regex         = string.join([
+			// Utilisation
+			"container_cpu_usage_seconds_total",
+			"container_memory_working_set_bytes",
+			"container_network_(receive|transmit)_bytes_total",
+			"container_fs_(reads|writes)_bytes_total",
+			// Saturation
+			"container_cpu_cfs_throttled_seconds_total",
+			"container_spec_memory_limit_bytes",
+			// Errors
+			"container_network_(receive|transmit)_errors_total",
+			// Restarts
+			"container_start_time_seconds",
+		], "|")
+	}
 
-  // Drop the root and non-container cgroups.
-  rule {
-    source_labels = ["name"]
-    action        = "drop"
-    regex         = ""
-  }
+	// Drop the root and non-container cgroups.
+	rule {
+		source_labels = ["name"]
+		action        = "drop"
+		regex         = ""
+	}
 
-  rule {
-    source_labels = ["name"]
-    target_label  = "container"
-  }
+	rule {
+		source_labels = ["name"]
+		target_label  = "container"
+	}
 
-  rule {
-    source_labels = ["container_label_com_docker_compose_project"]
-    target_label  = "compose_project"
-  }
+	rule {
+		source_labels = ["container_label_com_docker_compose_project"]
+		target_label  = "compose_project"
+	}
 
-  rule {
-    source_labels = ["container_label_com_docker_compose_service"]
-    target_label  = "compose_service"
-  }
+	rule {
+		source_labels = ["container_label_com_docker_compose_service"]
+		target_label  = "compose_service"
+	}
 
-  // High cardinality / redundant labels.
-  rule {
-    action = "labeldrop"
-    regex  = "id|name|image|container_label_.+"
-  }
+	// High cardinality / redundant labels.
+	rule {
+		action = "labeldrop"
+		regex  = "id|name|image|container_label_.+"
+	}
 
-  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
 }

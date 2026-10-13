@@ -7,28 +7,28 @@
 // at 60s (1 DPM per series) and keeps only an allowlist of golden-signal metrics.
 
 logging {
-  level  = "info"
-  format = "logfmt"
+	level  = "info"
+	format = "logfmt"
 }
 
 loki.write "grafana_cloud" {
-  endpoint {
-    url = sys.env("GRAFANA_LOKI_URL")
+	endpoint {
+		url = sys.env("GRAFANA_LOKI_URL")
 
-    basic_auth {
-      username = sys.env("GRAFANA_LOKI_USERNAME")
-      password = sys.env("GRAFANA_CLOUD_TOKEN")
-    }
-  }
+		basic_auth {
+			username = sys.env("GRAFANA_LOKI_USERNAME")
+			password = sys.env("GRAFANA_CLOUD_TOKEN")
+		}
+	}
 }
 
 prometheus.remote_write "grafana_cloud" {
-  endpoint {
-    url = sys.env("GRAFANA_PROMETHEUS_URL")
+	endpoint {
+		url = sys.env("GRAFANA_PROMETHEUS_URL")
 
-    basic_auth {
-      username = sys.env("GRAFANA_PROMETHEUS_USERNAME")
-      password = sys.env("GRAFANA_CLOUD_TOKEN")
-    }
-  }
+		basic_auth {
+			username = sys.env("GRAFANA_PROMETHEUS_USERNAME")
+			password = sys.env("GRAFANA_CLOUD_TOKEN")
+		}
+	}
 }

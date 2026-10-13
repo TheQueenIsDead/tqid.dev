@@ -2,65 +2,65 @@
 // ~250 series on a typical 8-16 core host.
 
 prometheus.exporter.unix "host" {
-  procfs_path    = "/host/proc"
-  sysfs_path     = "/host/sys"
-  rootfs_path    = "/host/root"
-  set_collectors = ["cpu", "diskstats", "filesystem", "loadavg", "meminfo", "netdev", "pressure", "stat", "uname"]
+	procfs_path    = "/host/proc"
+	sysfs_path     = "/host/sys"
+	rootfs_path    = "/host/root"
+	set_collectors = ["cpu", "diskstats", "filesystem", "loadavg", "meminfo", "netdev", "pressure", "stat", "uname"]
 
-  filesystem {
-    mount_points_exclude = "^/(dev|proc|run|sys|var/lib/docker/.+)($|/)"
-    fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tmpfs|tracefs)$"
-  }
+	filesystem {
+		mount_points_exclude = "^/(dev|proc|run|sys|var/lib/docker/.+)($|/)"
+		fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tmpfs|tracefs)$"
+	}
 
-  netdev {
-    device_exclude = "^(veth.*|br-.*|docker\\d+|lo)$"
-  }
+	netdev {
+		device_exclude = "^(veth.*|br-.*|docker\\d+|lo)$"
+	}
 }
 
 discovery.relabel "host" {
-  targets = prometheus.exporter.unix.host.targets
+	targets = prometheus.exporter.unix.host.targets
 
-  rule {
-    target_label = "instance"
-    replacement  = constants.hostname
-  }
+	rule {
+		target_label = "instance"
+		replacement  = constants.hostname
+	}
 
-  rule {
-    target_label = "job"
-    replacement  = "integrations/node_exporter"
-  }
+	rule {
+		target_label = "job"
+		replacement  = "integrations/node_exporter"
+	}
 }
 
 prometheus.scrape "host" {
-  targets         = discovery.relabel.host.output
-  scrape_interval = "60s"
-  forward_to      = [prometheus.relabel.host.receiver]
+	targets         = discovery.relabel.host.output
+	scrape_interval = "60s"
+	forward_to      = [prometheus.relabel.host.receiver]
 }
 
 prometheus.relabel "host" {
-  rule {
-    source_labels = ["__name__"]
-    action        = "keep"
-    regex         = string.join([
-      "up",
-      // Utilisation
-      "node_cpu_seconds_total",
-      "node_load(1|5|15)",
-      "node_memory_(MemTotal|MemAvailable|SwapTotal|SwapFree)_bytes",
-      "node_filesystem_(avail|size)_bytes",
-      "node_filesystem_readonly",
-      "node_disk_(read|written)_bytes_total",
-      "node_disk_io_time_seconds_total",
-      "node_network_(receive|transmit)_bytes_total",
-      // Saturation
-      "node_pressure_(cpu|memory|io)_waiting_seconds_total",
-      // Errors
-      "node_network_(receive|transmit)_(errs|drop)_total",
-      // Info
-      "node_boot_time_seconds",
-      "node_uname_info",
-    ], "|")
-  }
+	rule {
+		source_labels = ["__name__"]
+		action        = "keep"
+		regex         = string.join([
+			"up",
+			// Utilisation
+			"node_cpu_seconds_total",
+			"node_load(1|5|15)",
+			"node_memory_(MemTotal|MemAvailable|SwapTotal|SwapFree)_bytes",
+			"node_filesystem_(avail|size)_bytes",
+			"node_filesystem_readonly",
+			"node_disk_(read|written)_bytes_total",
+			"node_disk_io_time_seconds_total",
+			"node_network_(receive|transmit)_bytes_total",
+			// Saturation
+			"node_pressure_(cpu|memory|io)_waiting_seconds_total",
+			// Errors
+			"node_network_(receive|transmit)_(errs|drop)_total",
+			// Info
+			"node_boot_time_seconds",
+			"node_uname_info",
+		], "|")
+	}
 
-  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
 }

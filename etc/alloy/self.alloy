@@ -1,29 +1,29 @@
 // Alloy self-monitoring -> Prometheus
 // Only pipeline health is kept; the full self exporter emits thousands of series.
 
-prometheus.exporter.self "alloy" {}
+prometheus.exporter.self "alloy" { }
 
 prometheus.scrape "alloy" {
-  targets         = prometheus.exporter.self.alloy.targets
-  job_name        = "integrations/alloy"
-  scrape_interval = "60s"
-  forward_to      = [prometheus.relabel.alloy.receiver]
+	targets         = prometheus.exporter.self.alloy.targets
+	job_name        = "integrations/alloy"
+	scrape_interval = "60s"
+	forward_to      = [prometheus.relabel.alloy.receiver]
 }
 
 prometheus.relabel "alloy" {
-  rule {
-    source_labels = ["__name__"]
-    action        = "keep"
-    regex         = string.join([
-      "up",
-      "alloy_build_info",
-      "alloy_component_controller_running_components",
-      "process_cpu_seconds_total",
-      "process_resident_memory_bytes",
-      "prometheus_remote_storage_samples_(total|failed_total|dropped_total)",
-      "loki_write_(sent|dropped)_entries_total",
-    ], "|")
-  }
+	rule {
+		source_labels = ["__name__"]
+		action        = "keep"
+		regex         = string.join([
+			"up",
+			"alloy_build_info",
+			"alloy_component_controller_running_components",
+			"process_cpu_seconds_total",
+			"process_resident_memory_bytes",
+			"prometheus_remote_storage_samples_(total|failed_total|dropped_total)",
+			"loki_write_(sent|dropped)_entries_total",
+		], "|")
+	}
 
-  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
 }
