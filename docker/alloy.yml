@@ -6,21 +6,32 @@ services:
     image: grafana/alloy:v1.20.1
     command:
       - "run"
-      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--server.http.listen-addr=127.0.0.1:12345"
       - "--storage.path=/var/lib/alloy/data"
-      - "/etc/alloy/config.alloy"
+      - "/etc/alloy"
     environment:
-      GRAFANA_COLLECTOR_ID: "1256811"
-      GRAFANA_COLLECTOR_TOKEN: ${GRAFANA_COLLECTOR_TOKEN}
-      GRAFANA_FLEET_TOKEN: ${GRAFANA_COLLECTOR_TOKEN}
+      GRAFANA_CLOUD_TOKEN: ${GRAFANA_CLOUD_TOKEN}
+      GRAFANA_LOKI_URL: ${GRAFANA_LOKI_URL}
+      GRAFANA_LOKI_USERNAME: ${GRAFANA_LOKI_USERNAME}
+      GRAFANA_PROMETHEUS_URL: ${GRAFANA_PROMETHEUS_URL}
+      GRAFANA_PROMETHEUS_USERNAME: ${GRAFANA_PROMETHEUS_USERNAME}
     volumes:
-      - '../etc/config.alloy:/etc/alloy/config.alloy'
+      - '../etc/alloy:/etc/alloy:ro'
       - '/var/run/docker.sock:/var/run/docker.sock'
-    expose:
-      - '12345'
+      # Host filesystems for node metrics
+      - '/proc:/host/proc:ro'
+      - '/sys:/host/sys:ro'
+      - '/:/host/root:ro,rslave'
+      # systemd journal for syslogs
+      - '/var/log/journal:/var/log/journal:ro'
+      - '/run/log/journal:/run/log/journal:ro'
+      - '/etc/machine-id:/etc/machine-id:ro'
+      # cAdvisor per-container metrics
+      - '/var/lib/docker:/var/lib/docker:ro'
+      - '/dev/disk:/dev/disk:ro'
+    # Host namespaces so node metrics (notably network traffic) reflect the host, not the container
+    network_mode: host
+    pid: host
+    # Host cgroup namespace so cAdvisor can see every container's cgroup
+    cgroup: host
     restart: "unless-stopped"
-    networks:
-      - default
-
-networks:
-  default:

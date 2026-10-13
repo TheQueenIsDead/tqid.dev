@@ -1,0 +1,44 @@
+name: "Alloy Validate"
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/alloy-validate.yml
+      - docker/alloy.yml
+      - etc/alloy/**
+
+jobs:
+  validate:
+    # GitHub-hosted on purpose: PR code should never run on the self-hosted runner.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Use the same image as docker/alloy.yml so Renovate bumps keep CI in step.
+      - name: Resolve Alloy image
+        id: image
+        run: echo "ref=$(grep -oE 'grafana/alloy:[^"[:space:]]+' docker/alloy.yml)" >> "$GITHUB_OUTPUT"
+
+      - name: Check formatting
+        run: |
+          status=0
+          for f in etc/alloy/*.alloy; do
+            if ! docker run --rm -v "$PWD/etc/alloy:/etc/alloy:ro" "${{ steps.image.outputs.ref }}" \
+                fmt "/etc/alloy/$(basename "$f")" | diff -u --label "$f" --label "$f (alloy fmt)" "$f" -; then
+              status=1
+            fi
+          done
+          exit $status
+
+      - name: Validate config
+        run: |
+          docker run --rm -v "$PWD/etc/alloy:/etc/alloy:ro" \
+            -e GRAFANA_CLOUD_TOKEN=dummy \
+            -e GRAFANA_LOKI_URL=http://localhost/loki/api/v1/push \
+            -e GRAFANA_LOKI_USERNAME=dummy \
+            -e GRAFANA_PROMETHEUS_URL=http://localhost/api/prom/push \
+            -e GRAFANA_PROMETHEUS_USERNAME=dummy \
+            "${{ steps.image.outputs.ref }}" validate /etc/alloy
+
+      - name: Validate compose file
+        run: docker compose -f docker/alloy.yml config --quiet

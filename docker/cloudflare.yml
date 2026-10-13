@@ -7,9 +7,14 @@ services:
     command:
       - "tunnel"
       - "--no-autoupdate"
+      - "--metrics"
+      - "0.0.0.0:2000"
       - "run"
       - "--token"
       - "${CLOUDFLARE_TOKEN}"
+    labels:
+      - "alloy.metrics.scrape=true"
+      - "alloy.metrics.port=2000"
 
 networks:
   default:
