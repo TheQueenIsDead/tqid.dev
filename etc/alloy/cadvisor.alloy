@@ -1,12 +1,12 @@
 // Per-container metrics (cAdvisor) -> Prometheus
-// ~10 series per container.
+// ~12 series per container.
 
 prometheus.exporter.cadvisor "containers" {
 	docker_host                  = "unix:///var/run/docker.sock"
 	docker_only                  = true
 	store_container_labels       = false
 	allowlisted_container_labels = ["com.docker.compose.project", "com.docker.compose.service"]
-	enabled_metrics              = ["cpu", "memory", "network", "diskIO"]
+	enabled_metrics              = ["cpu", "memory", "network", "disk", "diskIO"]
 }
 
 prometheus.scrape "cadvisor" {
@@ -26,6 +26,7 @@ prometheus.relabel "cadvisor" {
 			"container_memory_working_set_bytes",
 			"container_network_(receive|transmit)_bytes_total",
 			"container_fs_(reads|writes)_bytes_total",
+			"container_fs_usage_bytes",
 			// Saturation
 			"container_cpu_cfs_throttled_seconds_total",
 			"container_spec_memory_limit_bytes",

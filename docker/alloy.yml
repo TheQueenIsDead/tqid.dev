@@ -26,8 +26,9 @@ services:
       - '/var/log/journal:/var/log/journal:ro'
       - '/run/log/journal:/run/log/journal:ro'
       - '/etc/machine-id:/etc/machine-id:ro'
-      # cAdvisor per-container metrics
-      - '/var/lib/docker:/var/lib/docker:ro'
+      # cAdvisor container disk usage. Docker is snap-installed; cAdvisor reads the
+      # data root reported by `docker info`, so it must be mounted at the same path.
+      - '/var/snap/docker/common/var-lib-docker:/var/snap/docker/common/var-lib-docker:ro'
       - '/dev/disk:/dev/disk:ro'
     # Host namespaces so node metrics (notably network traffic) reflect the host, not the container
     network_mode: host
