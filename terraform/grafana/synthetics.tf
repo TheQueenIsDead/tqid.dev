@@ -1,12 +1,11 @@
 locals {
   # Public sites probed from outside the network. Keys become the check's job name.
   synthetic_checks = {
-    "Immich"            = "https://photos.tqid.dev"
-    "Immich (Pangolin)" = "https://photos-pandolin.tqid.dev/photos"
-    "Jellyfin"          = "https://jellyfin.tqid.dev"
-    "Jellyseerr"        = "https://jellyseer.tqid.dev"
-    "Chat"              = "https://chat.tqid.dev"
-    "Speedtest"         = "https://speed.tqid.dev"
+    "Immich"     = "https://photos.tqid.dev"
+    "Jellyfin"   = "https://jellyfin.tqid.dev"
+    "Jellyseerr" = "https://jellyseer.tqid.dev"
+    "Chat"       = "https://chat.tqid.dev"
+    "Speedtest"  = "https://speed.tqid.dev"
   }
 
   synthetic_probes = [15] # Sydney
