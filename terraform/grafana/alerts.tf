@@ -338,7 +338,7 @@ locals {
     # is likely stuck or not doing what it should.
     "Runaway container" = {
       datasource  = "prometheus"
-      expr        = "sum by (instance, container) (rate(container_cpu_usage_seconds_total{container!~\"tdarr|jellyfin|immich_machine_learning\"}[5m]))"
+      expr        = "sum by (instance, container) (rate(container_cpu_usage_seconds_total{container!~\"tdarr|jellyfin|immich-machine-learning\"}[5m]))"
       threshold   = 3
       comparison  = "gt"
       for         = "1h"

@@ -176,7 +176,7 @@ then load the newest dump from `backups/` into a fresh database.
 ```shell
 docker compose -f docker/immich.yml up -d database
 gunzip --stdout /mnt/unitek/immich/library/backups/<newest>.sql.gz \
-  | docker exec -i immich_postgres psql --username=postgres --dbname=postgres
+  | docker exec -i immich-postgres psql --username=postgres --dbname=postgres
 docker compose -f docker/immich.yml up --wait
 ```
 
