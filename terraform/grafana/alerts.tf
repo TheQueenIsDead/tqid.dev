@@ -266,9 +266,10 @@ locals {
     }
 
     # Backups run daily, so a metrics file older than a day and a bit means the timer stopped.
+    # The weekly check has its own file and threshold below.
     "Backup stale" = {
       datasource  = "prometheus"
-      expr        = "(time() - node_textfile_mtime_seconds) / 3600"
+      expr        = "(time() - node_textfile_mtime_seconds{file!~\".*maintenance.prom\"}) / 3600"
       threshold   = 26
       comparison  = "gt"
       for         = "15m"
@@ -276,6 +277,31 @@ locals {
       severity    = "critical"
       summary     = "No backup from {{ $labels.file }} in over a day"
       description = "The last backup result ({{ $labels.file }}) is {{ humanize $values.A.Value }}h old. Check `systemctl list-timers 'resticprofile-*'` on nuc."
+    }
+
+    # Written by the maintenance profile's hooks after the weekly `restic check`.
+    "Backup check failed" = {
+      datasource  = "prometheus"
+      expr        = "resticprofile_check_success"
+      threshold   = 1
+      comparison  = "lt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "Backup repository check failed"
+      description = "The weekly restic check found a problem with the backups in Backblaze. Check /var/log/resticprofile/maintenance.log on nuc."
+    }
+
+    "Backup check stale" = {
+      datasource  = "prometheus"
+      expr        = "(time() - node_textfile_mtime_seconds{file=~\".*maintenance.prom\"}) / 86400"
+      threshold   = 8
+      comparison  = "gt"
+      for         = "15m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "Backup repository check hasn't run in over a week"
+      description = "The last restic check result is {{ humanize $values.A.Value }} days old. Check `systemctl list-timers 'resticprofile-*'` on nuc."
     }
   }
 }
