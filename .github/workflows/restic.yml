@@ -64,13 +64,22 @@ jobs:
       - name: "Install resticprofile"
         run: |
           set -euo pipefail
-          if resticprofile version 2>/dev/null | grep -qw "${RESTICPROFILE_VERSION#v}"; then
-            echo "resticprofile ${RESTICPROFILE_VERSION} already installed"
+          version="${RESTICPROFILE_VERSION#v}"
+          if resticprofile version 2>/dev/null | grep -qw "${version}"; then
+            echo "resticprofile ${version} already installed"
             exit 0
           fi
-          # The vendored install script verifies the release checksum before installing
-          curl -fsSL https://raw.githubusercontent.com/creativeprojects/resticprofile/master/install.sh \
-            | sudo sh -s -- -b /usr/local/bin "${RESTICPROFILE_VERSION}"
+          # Fetch the pinned release directly rather than piping an install script from
+          # master, so the version installed is exactly the one pinned above
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "${tmp}"' EXIT
+          asset="resticprofile_${version}_linux_amd64.tar.gz"
+          base="https://github.com/creativeprojects/resticprofile/releases/download/${RESTICPROFILE_VERSION}"
+          curl -fsSL -o "${tmp}/${asset}" "${base}/${asset}"
+          curl -fsSL -o "${tmp}/checksums.txt" "${base}/checksums.txt"
+          (cd "${tmp}" && grep " ${asset}\$" checksums.txt | sha256sum --check --strict -)
+          tar -xzf "${tmp}/${asset}" -C "${tmp}" resticprofile
+          sudo install -m 0755 "${tmp}/resticprofile" /usr/local/bin/resticprofile
 
       - name: "Deploy configuration"
         run: |
