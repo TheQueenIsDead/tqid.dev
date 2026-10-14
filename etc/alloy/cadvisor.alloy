@@ -1,5 +1,6 @@
 // Per-container metrics (cAdvisor) -> Prometheus
-// ~10 series per container.
+// ~17 series per container. Metric and label names match what the Grafana Cloud Docker
+// integration dashboards query (they filter on `name`), so those work as-is.
 
 prometheus.exporter.cadvisor "containers" {
 	docker_host                  = "unix:///var/run/docker.sock"
@@ -24,23 +25,30 @@ prometheus.relabel "cadvisor" {
 			// Utilisation
 			"container_cpu_usage_seconds_total",
 			"container_memory_working_set_bytes",
+			"container_memory_usage_bytes",
 			"container_network_(receive|transmit)_bytes_total",
 			"container_fs_(reads|writes)_bytes_total",
+			"container_fs_(reads|writes)_total",
 			// Saturation
 			"container_cpu_cfs_throttled_seconds_total",
 			"container_spec_memory_limit_bytes",
+			"container_spec_memory_reservation_limit_bytes",
+			"machine_memory_bytes",
 			// Errors
 			"container_network_(receive|transmit)_errors_total",
-			// Restarts
+			"container_network_(receive|transmit)_packets_dropped_total",
+			"machine_scrape_error",
+			// Inventory and restarts
+			"container_last_seen",
 			"container_start_time_seconds",
 		], "|")
 	}
 
-	// Drop the root and non-container cgroups.
+	// Drop the root and non-container cgroups. Host-level machine_* metrics have no name.
 	rule {
-		source_labels = ["name"]
+		source_labels = ["__name__", "name"]
 		action        = "drop"
-		regex         = ""
+		regex         = "container_.+;"
 	}
 
 	rule {
@@ -58,10 +66,11 @@ prometheus.relabel "cadvisor" {
 		target_label  = "compose_service"
 	}
 
-	// High cardinality / redundant labels.
+	// Raw cgroup path and the original Docker labels, now copied to the labels above.
+	// `name` and `image` are kept for the integration dashboards.
 	rule {
 		action = "labeldrop"
-		regex  = "id|name|image|container_label_.+"
+		regex  = "id|container_label_.+"
 	}
 
 	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
