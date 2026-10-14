@@ -256,6 +256,19 @@ locals {
       description = "{{ $values.A.Value }} kernel disk/I/O error lines in the last 5m. Check `journalctl -k` for the affected device."
     }
 
+    # NUC CPUs throttle at about 100C; sustained heat usually means a failing fan or poor airflow.
+    "Running hot" = {
+      datasource  = "prometheus"
+      expr        = "max by (instance, chip, sensor) (node_hwmon_temp_celsius)"
+      threshold   = 85
+      comparison  = "gt"
+      for         = "10m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.chip }} {{ $labels.sensor }} is running hot"
+      description = "{{ $labels.chip }} {{ $labels.sensor }} on {{ $labels.instance }} has been at {{ humanize $values.A.Value }}C for 10m. Check the fan and airflow; sustained heat throttles the CPU."
+    }
+
     "Memory pressure" = {
       datasource  = "prometheus"
       expr        = "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes"
@@ -409,7 +422,7 @@ resource "grafana_rule_group" "tqid" {
         contact_point = "Discord"
         # One notification per affected thing, so the Discord template's CommonAnnotations are populated.
         # Listed explicitly rather than "..." so Grafana's internal labels don't end up in the title.
-        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file"]
+        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file", "chip", "sensor"]
 
         group_wait      = local.notification_timing.group_wait
         group_interval  = local.notification_timing.group_interval

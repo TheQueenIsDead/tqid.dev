@@ -5,7 +5,7 @@ prometheus.exporter.unix "host" {
 	procfs_path    = "/host/proc"
 	sysfs_path     = "/host/sys"
 	rootfs_path    = "/host/root"
-	set_collectors = ["cpu", "diskstats", "filesystem", "loadavg", "meminfo", "netdev", "pressure", "stat", "textfile", "uname"]
+	set_collectors = ["cpu", "diskstats", "filesystem", "hwmon", "loadavg", "meminfo", "netdev", "pressure", "stat", "textfile", "uname"]
 
 	filesystem {
 		mount_points_exclude = "^/(dev|proc|run|sys|var/lib/docker/.+)($|/)"
@@ -66,6 +66,10 @@ prometheus.relabel "host" {
 			"node_textfile_scrape_error",
 			"resticprofile_backup_(status|time_seconds|duration_seconds|added_bytes)",
 			"resticprofile_check_success",
+			// Temperatures (hwmon): CPU package/cores, NVMe, board sensors
+			"node_hwmon_temp_celsius",
+			"node_hwmon_temp_crit_celsius",
+			"node_hwmon_sensor_label",
 			// Info
 			"node_boot_time_seconds",
 			"node_uname_info",
