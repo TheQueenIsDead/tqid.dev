@@ -83,7 +83,7 @@ Set these in the repository's Actions secrets:
 | `B2_APPLICATION_KEY` | The `applicationKey` from the application key. |
 
 > **Keep `RESTIC_PASSWORD` somewhere outside this setup**, along with the other secrets that only
-> live in GitHub and HCP Terraform (`CLOUDFLARE_TOKEN`, `NEWT_ID`/`NEWT_SECRET`, `DB_PASSWORD`,
+> live in GitHub and HCP Terraform (`CLOUDFLARE_TOKEN`, `DB_PASSWORD`,
 > the Grafana tokens). It is not recoverable, and without
 > it the backups are so much noise. A GitHub secret is write-only — it cannot be read back.
 
