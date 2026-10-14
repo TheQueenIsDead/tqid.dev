@@ -330,6 +330,10 @@ resource "grafana_rule_group" "tqid" {
         # One notification per affected thing, so the Discord template's CommonAnnotations are populated.
         # Listed explicitly rather than "..." so Grafana's internal labels don't end up in the title.
         group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason"]
+
+        group_wait      = local.notification_timing.group_wait
+        group_interval  = local.notification_timing.group_interval
+        repeat_interval = local.notification_timing.repeat_interval[rule.value.severity]
       }
     }
   }
