@@ -327,8 +327,9 @@ resource "grafana_rule_group" "tqid" {
       notification_settings {
         # Contact point is managed manually in the Grafana UI.
         contact_point = "Discord"
-        # One notification per alert, so the Discord template's CommonAnnotations are populated.
-        group_by = ["..."]
+        # One notification per affected thing, so the Discord template's CommonAnnotations are populated.
+        # Listed explicitly rather than "..." so Grafana's internal labels don't end up in the title.
+        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason"]
       }
     }
   }
