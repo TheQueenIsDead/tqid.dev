@@ -307,6 +307,59 @@ locals {
       description = "{{ $labels.device }} has been busy {{ humanizePercentage $values.A.Value }} of the time for 30m; it may be overloaded or failing."
     }
 
+    # CPU. Pressure measures work actually being held up, so a transcode using every core only
+    # alerts if it starves something else. The rest catch disk stalls, runaway containers and
+    # plain saturation.
+    "CPU pressure" = {
+      datasource  = "prometheus"
+      expr        = "rate(node_pressure_cpu_waiting_seconds_total[5m])"
+      threshold   = 0.5
+      comparison  = "gt"
+      for         = "30m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "Processes on {{ $labels.instance }} are waiting for CPU"
+      description = "Tasks have spent {{ humanizePercentage $values.A.Value }} of the last 30m waiting for a CPU. Check the Docker overview dashboard or `top` for what's using it."
+    }
+
+    "Disk wait" = {
+      datasource  = "prometheus"
+      expr        = "avg by (instance) (rate(node_cpu_seconds_total{mode=\"iowait\"}[5m]))"
+      threshold   = 0.3
+      comparison  = "gt"
+      for         = "30m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.instance }} is stalled waiting on disk"
+      description = "CPUs have spent {{ humanizePercentage $values.A.Value }} of the last 30m waiting on disk I/O. Usually a slow or failing disk (check the Unitek drive and `dmesg`), or something hammering it."
+    }
+
+    # Expected heavy users are excluded; anything else using a quarter of the machine for an hour
+    # is likely stuck or not doing what it should.
+    "Runaway container" = {
+      datasource  = "prometheus"
+      expr        = "sum by (instance, container) (rate(container_cpu_usage_seconds_total{container!~\"tdarr|jellyfin|immich_machine_learning\"}[5m]))"
+      threshold   = 3
+      comparison  = "gt"
+      for         = "1h"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.container }} is using a lot of CPU"
+      description = "{{ $labels.container }} has used {{ humanize $values.A.Value }} cores for an hour. It may be stuck in a loop, or compromised."
+    }
+
+    "CPU saturated" = {
+      datasource  = "prometheus"
+      expr        = "1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))"
+      threshold   = 0.9
+      comparison  = "gt"
+      for         = "30m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.instance }} CPU is saturated"
+      description = "CPU has been {{ humanizePercentage $values.A.Value }} busy for 30m."
+    }
+
     # From the metrics resticprofile writes after each backup (etc/resticprofile.yaml).
     "Backup failed" = {
       datasource  = "prometheus"
