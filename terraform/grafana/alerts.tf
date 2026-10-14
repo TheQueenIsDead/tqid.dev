@@ -177,6 +177,20 @@ locals {
       description = "No node metrics have been received for 5m; the host, Alloy, or its connection to Grafana Cloud is down."
     }
 
+    # A disconnected or unmounted drive has no filesystem metrics at all, which every other disk
+    # alert treats as OK. Only fires while node metrics are arriving, so it doesn't echo Host down.
+    "Unitek drive missing" = {
+      datasource  = "prometheus"
+      expr        = "absent(node_filesystem_size_bytes{mountpoint=\"/mnt/unitek\"}) and on() (sum(up{job=\"integrations/node_exporter\"}) > 0)"
+      threshold   = 0
+      comparison  = "gt"
+      for         = "5m"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "/mnt/unitek is not mounted"
+      description = "The Unitek USB drive is not mounted on nuc. Media, Immich, app config and backup sources live on it. Check the enclosure's connection, `lsblk` and `dmesg`."
+    }
+
     "Disk filling up" = {
       datasource = "prometheus"
       # Free space in 24h, extrapolated from the last 6h.
