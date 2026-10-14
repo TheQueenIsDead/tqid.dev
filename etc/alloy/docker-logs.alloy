@@ -33,5 +33,21 @@ loki.source.docker "containers" {
 	host          = "unix:///var/run/docker.sock"
 	targets       = discovery.docker.containers.targets
 	relabel_rules = discovery.relabel.containers.rules
-	forward_to    = [loki.write.grafana_cloud.receiver]
+	// Labels expected by the Grafana Cloud Docker integration dashboards.
+	labels = {
+		job      = "integrations/docker",
+		instance = constants.hostname,
+	}
+	forward_to = [loki.process.containers.receiver]
+}
+
+loki.process "containers" {
+	// With no saved position, Alloy reads a container's whole log history. Loki rejects
+	// old entries anyway, so drop them here instead of spending the ingestion limit on them.
+	stage.drop {
+		older_than          = "1h"
+		drop_counter_reason = "too_old"
+	}
+
+	forward_to = [loki.write.grafana_cloud.receiver]
 }

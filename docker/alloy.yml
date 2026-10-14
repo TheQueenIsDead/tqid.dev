@@ -17,6 +17,8 @@ services:
       GRAFANA_PROMETHEUS_USERNAME: ${GRAFANA_PROMETHEUS_USERNAME}
     volumes:
       - '../etc/alloy:/etc/alloy:ro'
+      # Persist log positions and the metrics WAL; without it every restart re-sends all container log history
+      - 'alloy-data:/var/lib/alloy/data'
       - '/var/run/docker.sock:/var/run/docker.sock'
       # Host filesystems for node metrics
       - '/proc:/host/proc:ro'
@@ -27,9 +29,15 @@ services:
       - '/var/log/journal:/var/log/journal:ro'
       - '/run/log/journal:/run/log/journal:ro'
       - '/etc/machine-id:/etc/machine-id:ro'
+      # cAdvisor needs Docker's data root to identify containers' layers. Docker is
+      # snap-installed and cAdvisor uses the path from `docker info`, so mount it 1:1.
+      - '/var/snap/docker/common/var-lib-docker:/var/snap/docker/common/var-lib-docker:ro'
     # Host namespaces so node metrics (notably network traffic) reflect the host, not the container
     network_mode: host
     pid: host
     # Host cgroup namespace so cAdvisor can see every container's cgroup
     cgroup: host
     restart: "unless-stopped"
+
+volumes:
+  alloy-data:
