@@ -156,6 +156,20 @@ sudo resticprofile --name apps restore <snapshot-id> --target / --include /mnt/u
 sudo resticprofile --name apps ls <snapshot-id>
 ```
 
+Tdarr is backed up from its own nightly export (`server/Tdarr/Backups`), not its live
+database. To restore, put back `tdarr/configs` and the `Backups` folder, stop Tdarr, empty
+`server/Tdarr` of everything except `Backups`, and unzip the newest zip into `server/Tdarr`.
+
+```shell
+sudo resticprofile --name apps restore latest --target / \
+  --include /mnt/unitek/config/tdarr/configs --include /mnt/unitek/config/tdarr/server/Tdarr/Backups
+docker compose -f docker/arr.yml stop tdarr
+cd /mnt/unitek/config/tdarr/server/Tdarr
+sudo find . -mindepth 1 -maxdepth 1 ! -name Backups -exec rm -rf {} +
+sudo unzip "$(ls -t Backups/*.zip | head -1)" -d .
+docker compose -f docker/arr.yml start tdarr
+```
+
 Restoring Immich is two steps: restore the four folders under `/mnt/unitek/immich/library`,
 then load the newest dump from `backups/` into a fresh database.
 

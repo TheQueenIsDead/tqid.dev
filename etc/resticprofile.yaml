@@ -80,7 +80,10 @@ apps:
       - "/mnt/unitek/config/qbittorrent"
       - "/mnt/unitek/config/jellyfin"
       - "/mnt/unitek/config/jellyseer"
-      - "/mnt/unitek/config/tdarr/server"
+      # Tdarr: its own nightly database export rather than the live DB2 folder, which is
+      # mostly job reports and could be caught mid-write. Restore by unzipping the newest
+      # Backups/*.zip into server/Tdarr.
+      - "/mnt/unitek/config/tdarr/server/Tdarr/Backups"
       - "/mnt/unitek/config/tdarr/configs"
     exclude:
       # Artwork and caches - re-downloaded or regenerated, and the bulk of the size
