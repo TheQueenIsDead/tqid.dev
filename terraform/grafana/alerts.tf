@@ -191,6 +191,20 @@ locals {
       description = "The Unitek USB drive is not mounted on nuc. Media, Immich, app config and backup sources live on it. Check the enclosure's connection, `lsblk` and `dmesg`."
     }
 
+    # A quick power cut or kernel panic can recover before Host down fires. Uptime rather than
+    # changes() to the boot time, which can shift by a second when NTP adjusts the clock.
+    "Host rebooted" = {
+      datasource  = "prometheus"
+      expr        = "(time() - node_boot_time_seconds) / 60"
+      threshold   = 60
+      comparison  = "lt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "nuc rebooted"
+      description = "nuc has been up for {{ humanize $values.A.Value }} minutes. If the reboot wasn't planned, check `journalctl --list-boots` and `journalctl -b -1 -e` for what happened before it."
+    }
+
     "Disk filling up" = {
       datasource = "prometheus"
       # Free space in 24h, extrapolated from the last 6h.
