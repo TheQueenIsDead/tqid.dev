@@ -29,7 +29,7 @@ resource "grafana_message_template" "discord" {
     {{ with .Annotations.description }}{{ . }}
     {{ end -}}
     Started <t:{{ .StartsAt.Unix }}:R>{{ if eq .Status "resolved" }}, resolved <t:{{ .EndsAt.Unix }}:R>{{ end }}
-    [View rule]({{ .GeneratorURL }}){{ if eq .Status "firing" }}{{ with .SilenceURL }} · [Silence]({{ . }}){{ end }}{{ end }}
+    {{ $rule := match "^https?://" .GeneratorURL }}{{ if $rule }}[View rule]({{ .GeneratorURL }}){{ end }}{{ if eq .Status "firing" }}{{ with .SilenceURL }}{{ if $rule }} · {{ end }}[Silence]({{ . }}){{ end }}{{ end }}
 
     {{ end -}}
     {{- end }}
