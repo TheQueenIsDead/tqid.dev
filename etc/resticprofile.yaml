@@ -33,7 +33,10 @@ default:
   prometheus-save-to-file: "/var/lib/resticprofile/metrics/{{ .Profile.Name }}.prom"
 
   backup:
-    verbose: true
+    # Parse restic's JSON summary so the status file and Prometheus metrics get real numbers
+    # (added bytes, new/changed files). Plain-text verbose output leaves them at zero. The
+    # log loses the per-file listing; the summary is still recorded.
+    extended-status: true
     one-file-system: true
     exclude-caches: true
     # A backup is worth more than a clean exit code - don't fail the run because a
