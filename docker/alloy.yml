@@ -38,6 +38,20 @@ services:
     # Host cgroup namespace so cAdvisor can see every container's cgroup
     cgroup: host
     restart: "unless-stopped"
+    # Ready once the config has loaded, so `up --wait` fails the deploy on a broken config.
+    # /-/healthy is deliberately not used: it fails on transient component errors (e.g. Grafana
+    # Cloud rejecting writes). The image has no curl or wget, so bash's /dev/tcp makes the request.
+    # Alloy doesn't reload changed config files itself, which is why the deploy recreates the
+    # container rather than relying on this to notice a new config.
+    #   Endpoints: https://grafana.com/docs/alloy/latest/reference/http/
+    #   Image contents: https://github.com/grafana/alloy/blob/main/Dockerfile
+    #   No config file watching: https://github.com/grafana/alloy/issues/508
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/12345 && printf 'GET /-/ready HTTP/1.0\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
 volumes:
   alloy-data:

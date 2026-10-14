@@ -21,4 +21,8 @@ jobs:
       GRAFANA_PROMETHEUS_USERNAME: ${{ vars.GRAFANA_PROMETHEUS_USERNAME }}
     steps:
       - uses: actions/checkout@v7
-      - run: docker compose -f docker/alloy.yml up --wait
+      # The config is bind-mounted, so a change to etc/alloy alone wouldn't recreate the
+      # container, and Alloy doesn't watch its files. Recreate it so every deploy runs the
+      # config in the repo; alloy-data keeps log positions and the WAL across restarts.
+      # https://github.com/grafana/alloy/issues/508
+      - run: docker compose -f docker/alloy.yml up --wait --force-recreate
