@@ -269,6 +269,20 @@ locals {
       description = "{{ $labels.chip }} {{ $labels.sensor }} on {{ $labels.instance }} has been at {{ humanize $values.A.Value }}C for 10m. Check the fan and airflow; sustained heat throttles the CPU."
     }
 
+    # Counts every OOM kill on the host, including inside containers. A brief spike can kill a
+    # process without Memory pressure (15m below 10% available) ever firing.
+    "Out of memory kill" = {
+      datasource  = "prometheus"
+      expr        = "increase(node_vmstat_oom_kill[10m])"
+      threshold   = 0
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "The kernel killed a process on {{ $labels.instance }} for running out of memory"
+      description = "{{ humanize $values.A.Value }} out-of-memory kill(s) in the last 10m. Check `journalctl -k | grep -i 'killed process'` for which process, and the Docker overview dashboard for memory use."
+    }
+
     "Memory pressure" = {
       datasource  = "prometheus"
       expr        = "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes"
