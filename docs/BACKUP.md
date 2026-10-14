@@ -94,9 +94,22 @@ unit's `Environment=` is readable by every user on the box
 
 ## Host requirements
 
-The self-hosted runner needs passwordless `sudo` — it installs binaries to `/usr/local/bin`,
-writes to `/etc/resticprofile`, and registers systemd units. The backups themselves run as
-root (`schedule-permission: system`) because they read Docker volumes and other users' files.
+The self-hosted runner needs passwordless `sudo` for the two commands the workflow uses — it
+installs binaries to `/usr/local/bin`, writes to `/etc/resticprofile`, and registers systemd
+units. The backups themselves run as root (`schedule-permission: system`) because they read
+Docker volumes and other users' files.
+
+```shell
+# Use the user the runner runs as: ps -o user= -C Runner.Listener
+echo 'tqid ALL=(root) NOPASSWD: /usr/bin/install, /usr/local/bin/resticprofile' \
+  | sudo tee /etc/sudoers.d/github-runner
+sudo chmod 0440 /etc/sudoers.d/github-runner
+sudo visudo -c
+```
+
+Scoping it to two commands keeps it auditable, but `sudo install` can write any file as root,
+so the runner is effectively root on the NUC — as it already is through Docker. Keep
+`runs-on: self-hosted` to workflows triggered from `main` or by hand, never `pull_request`.
 
 ## Operating it
 
