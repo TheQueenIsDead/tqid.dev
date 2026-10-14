@@ -10,13 +10,13 @@ terraform {
   }
   required_providers {
     grafana = {
-      source = "grafana/grafana"
+      source  = "grafana/grafana"
       version = "4.47.0"
     }
   }
-  }
-
+}
 
 provider "grafana" {
-  # Configuration options
+  url  = var.grafana_url
+  auth = var.grafana_token
 }
