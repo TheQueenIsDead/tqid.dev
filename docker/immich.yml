@@ -22,6 +22,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.photos.rule=Host(`photos.tqid.dev`) || Host(`photos-pandolin.tqid.dev`)"
       - "traefik.http.routers.photos.entrypoints=web"
+      - "traefik.docker.network=docker_default"
     depends_on:
       - redis
       - database
