@@ -1,0 +1,132 @@
+# Restic backups for the NUC, driven by resticprofile.
+#
+# This file is the source of truth. It is deployed to /etc/resticprofile/profiles.yaml
+# by .github/workflows/restic.yml, which then runs `resticprofile schedule --all` to
+# (re)install the systemd timers. The host runs the backups on its own timers, so they
+# keep happening even when GitHub or the self-hosted runner is down.
+#
+# Secrets are NOT in here. RESTIC_PASSWORD, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+# are written to /etc/resticprofile/env (0600, root) from GitHub secrets. See docs/BACKUP.md.
+version: "1"
+
+global:
+  default-command: "snapshots"
+  # Backups are a background chore, they shouldn't fight the media stack for CPU or disk
+  priority: "low"
+  ionice: true
+  ionice-class: 2
+  ionice-level: 7
+  # The NUC reboots often enough to leave locks behind from a killed backup
+  restic-stale-lock-age: "2h"
+
+# Shared settings. Every profile below inherits these.
+default:
+  # Backblaze B2 through its S3 compatible API - restic recommends this over the native
+  # b2: backend: https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html#backblaze-b2
+  # The region has to match the bucket's, which is shown next to the bucket in the B2 UI.
+  repository: "s3:s3.us-west-004.backblazeb2.com/tqid-dev-backup"
+  env-file: "/etc/resticprofile/env"
+  initialize: true
+  force-inactive-lock: true
+  status-file: "/var/lib/resticprofile/status.json"
+  # Read by Alloy's node exporter textfile collector, so a failed or stale backup alerts
+  prometheus-save-to-file: "/var/lib/resticprofile/metrics/{{ .Profile.Name }}.prom"
+
+  backup:
+    verbose: true
+    one-file-system: true
+    exclude-caches: true
+    # A backup is worth more than a clean exit code - don't fail the run because a
+    # container had a file open and restic couldn't read it
+    no-error-on-warning: true
+    schedule-permission: "system"
+    schedule-lock-mode: "default"
+    schedule-lock-wait: "1h"
+    schedule-log: "/var/log/resticprofile/{{ .Profile.Name }}.log"
+
+  retention:
+    after-backup: true
+    keep-daily: 7
+    keep-weekly: 4
+    keep-monthly: 12
+    keep-yearly: 3
+    # Scope forget to this profile's own snapshots so one profile can't expire another's
+    tag: true
+    host: true
+    path: false
+    prune: true
+
+# Docker is snap-installed on the NUC, so its data root is here rather than /var/lib/docker.
+# Volumes from compose files without a `name:` take the `docker_` project prefix.
+# Paths are spelled out per volume, so a renamed volume fails loudly in restic rather than
+# silently dropping out of the backup.
+
+# Application data and config: the things that are slow or impossible to rebuild by hand.
+# Media is deliberately absent - it is large and re-acquirable.
+apps:
+  inherit: "default"
+  backup:
+    tag:
+      - "apps"
+    source:
+      # Notes and recipes
+      - "/var/snap/docker/common/var-lib-docker/volumes/docker_memos/_data"
+      - "/var/snap/docker/common/var-lib-docker/volumes/docker_mealie-data/_data"
+      # Media stack config: indexers, quality profiles, history, users, watch state, flows
+      - "/mnt/unitek/config/radarr"
+      - "/mnt/unitek/config/sonarr"
+      - "/mnt/unitek/config/prowlarr"
+      - "/mnt/unitek/config/sportarr"
+      - "/mnt/unitek/config/qbittorrent"
+      - "/mnt/unitek/config/jellyfin"
+      - "/mnt/unitek/config/jellyseer"
+      - "/mnt/unitek/config/tdarr/server"
+      - "/mnt/unitek/config/tdarr/configs"
+    exclude:
+      # Artwork and caches - re-downloaded or regenerated, and the bulk of the size
+      - "/mnt/unitek/config/radarr/MediaCover"
+      - "/mnt/unitek/config/sonarr/MediaCover"
+      - "/mnt/unitek/config/jellyfin/cache"
+      - "/mnt/unitek/config/jellyfin/data/metadata"
+      - "/mnt/unitek/config/jellyfin/data/transcodes"
+      - "/mnt/unitek/config/jellyfin/data/subtitles"
+      - "**/logs"
+      - "**/log"
+      - "**/*.log"
+      - "**/.cache"
+    schedule:
+      - "*-*-* 02:00:00"
+
+# Immich is split out because the library is large and slow to push. The database is not
+# copied live - Immich dumps it nightly at 02:00 into backups/ (Administration > Settings >
+# Backup Settings), and that dump is what gets stored here.
+immich:
+  inherit: "default"
+  backup:
+    tag:
+      - "immich"
+    source:
+      - "/mnt/unitek/immich/library/library"
+      - "/mnt/unitek/immich/library/upload"
+      - "/mnt/unitek/immich/library/profile"
+      - "/mnt/unitek/immich/library/backups"
+    schedule:
+      - "*-*-* 03:00:00"
+
+# Repository integrity. Structure weekly, plus a slice of the actual pack data, so bit
+# rot at B2 surfaces here rather than during a restore.
+maintenance:
+  inherit: "default"
+  initialize: false
+  check:
+    read-data-subset: "5%"
+    schedule:
+      - "Sun *-*-* 05:00:00"
+    schedule-permission: "system"
+    schedule-lock-wait: "2h"
+    schedule-log: "/var/log/resticprofile/maintenance.log"
+
+groups:
+  all:
+    - "apps"
+    - "immich"

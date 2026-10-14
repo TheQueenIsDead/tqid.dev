@@ -251,6 +251,32 @@ locals {
       summary     = "{{ $labels.device }} is saturated"
       description = "{{ $labels.device }} has been busy {{ humanizePercentage $values.A.Value }} of the time for 30m; it may be overloaded or failing."
     }
+
+    # From the metrics resticprofile writes after each backup (etc/resticprofile.yaml).
+    "Backup failed" = {
+      datasource  = "prometheus"
+      expr        = "resticprofile_backup_status"
+      threshold   = 1
+      comparison  = "lt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "{{ $labels.profile }} backup failed"
+      description = "The last {{ $labels.profile }} backup to Backblaze failed. Check /var/log/resticprofile/{{ $labels.profile }}.log on nuc."
+    }
+
+    # Backups run daily, so a metrics file older than a day and a bit means the timer stopped.
+    "Backup stale" = {
+      datasource  = "prometheus"
+      expr        = "(time() - node_textfile_mtime_seconds) / 3600"
+      threshold   = 26
+      comparison  = "gt"
+      for         = "15m"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "No backup from {{ $labels.file }} in over a day"
+      description = "The last backup result ({{ $labels.file }}) is {{ humanize $values.A.Value }}h old. Check `systemctl list-timers 'resticprofile-*'` on nuc."
+    }
   }
 }
 
@@ -329,7 +355,7 @@ resource "grafana_rule_group" "tqid" {
         contact_point = "Discord"
         # One notification per affected thing, so the Discord template's CommonAnnotations are populated.
         # Listed explicitly rather than "..." so Grafana's internal labels don't end up in the title.
-        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason"]
+        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file"]
 
         group_wait      = local.notification_timing.group_wait
         group_interval  = local.notification_timing.group_interval

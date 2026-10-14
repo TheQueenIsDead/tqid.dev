@@ -5,7 +5,7 @@ prometheus.exporter.unix "host" {
 	procfs_path    = "/host/proc"
 	sysfs_path     = "/host/sys"
 	rootfs_path    = "/host/root"
-	set_collectors = ["cpu", "diskstats", "filesystem", "loadavg", "meminfo", "netdev", "pressure", "stat", "uname"]
+	set_collectors = ["cpu", "diskstats", "filesystem", "loadavg", "meminfo", "netdev", "pressure", "stat", "textfile", "uname"]
 
 	filesystem {
 		mount_points_exclude = "^/(dev|proc|run|sys|var/lib/docker/.+)($|/)"
@@ -14,6 +14,11 @@ prometheus.exporter.unix "host" {
 
 	netdev {
 		device_exclude = "^(veth.*|br-.*|docker\\d+|lo)$"
+	}
+
+	// resticprofile writes each backup's result here (see etc/resticprofile.yaml).
+	textfile {
+		directory = "/host/root/var/lib/resticprofile/metrics"
 	}
 }
 
@@ -56,6 +61,10 @@ prometheus.relabel "host" {
 			"node_pressure_(cpu|memory|io)_waiting_seconds_total",
 			// Errors
 			"node_network_(receive|transmit)_(errs|drop)_total",
+			// Backups (textfile collector, written by resticprofile)
+			"node_textfile_mtime_seconds",
+			"node_textfile_scrape_error",
+			"resticprofile_backup_(status|time_seconds|duration_seconds|added_bytes)",
 			// Info
 			"node_boot_time_seconds",
 			"node_uname_info",

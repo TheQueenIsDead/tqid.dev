@@ -1,0 +1,132 @@
+name: "Restic"
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Command to run once the config is deployed"
+        type: choice
+        default: "schedule"
+        options:
+          - "schedule"
+          - "backup"
+          - "check"
+          - "snapshots"
+          - "stats"
+          - "unlock"
+      profile:
+        description: "Profile or group to run the command against"
+        type: choice
+        default: "all"
+        options:
+          - "all"
+          - "apps"
+          - "immich"
+          - "maintenance"
+  push:
+    paths:
+      - .github/workflows/restic.yml
+      - etc/resticprofile.yaml
+    branches:
+      - main
+
+# This workflow only deploys the config and installs the systemd timers - the host runs
+# the backups itself, so they keep happening when GitHub or the runner is unavailable.
+jobs:
+  restic:
+    runs-on: self-hosted
+    env:
+      # renovate: datasource=github-releases depName=restic/restic extractVersion=^v(?<version>.+)$
+      RESTIC_VERSION: "0.19.1"
+      # renovate: datasource=github-releases depName=creativeprojects/resticprofile
+      RESTICPROFILE_VERSION: "v0.33.1"
+      CONFIG: "/etc/resticprofile/profiles.yaml"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Install restic"
+        run: |
+          set -euo pipefail
+          if restic version 2>/dev/null | grep -qw "${RESTIC_VERSION}"; then
+            echo "restic ${RESTIC_VERSION} already installed"
+            exit 0
+          fi
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "${tmp}"' EXIT
+          asset="restic_${RESTIC_VERSION}_linux_amd64.bz2"
+          base="https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}"
+          curl -fsSL -o "${tmp}/${asset}" "${base}/${asset}"
+          curl -fsSL -o "${tmp}/SHA256SUMS" "${base}/SHA256SUMS"
+          (cd "${tmp}" && grep " ${asset}\$" SHA256SUMS | sha256sum --check --strict -)
+          bunzip2 "${tmp}/${asset}"
+          sudo install -m 0755 "${tmp}/restic_${RESTIC_VERSION}_linux_amd64" /usr/local/bin/restic
+
+      - name: "Install resticprofile"
+        run: |
+          set -euo pipefail
+          version="${RESTICPROFILE_VERSION#v}"
+          if resticprofile version 2>/dev/null | grep -qw "${version}"; then
+            echo "resticprofile ${version} already installed"
+            exit 0
+          fi
+          # Fetch the pinned release directly rather than piping an install script from
+          # master, so the version installed is exactly the one pinned above
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "${tmp}"' EXIT
+          asset="resticprofile_${version}_linux_amd64.tar.gz"
+          base="https://github.com/creativeprojects/resticprofile/releases/download/${RESTICPROFILE_VERSION}"
+          curl -fsSL -o "${tmp}/${asset}" "${base}/${asset}"
+          curl -fsSL -o "${tmp}/checksums.txt" "${base}/checksums.txt"
+          (cd "${tmp}" && grep " ${asset}\$" checksums.txt | sha256sum --check --strict -)
+          tar -xzf "${tmp}/${asset}" -C "${tmp}" resticprofile
+          sudo install -m 0755 "${tmp}/resticprofile" /usr/local/bin/resticprofile
+
+      - name: "Deploy configuration"
+        run: |
+          set -euo pipefail
+          sudo install -d -m 0755 /etc/resticprofile /var/lib/resticprofile /var/lib/resticprofile/metrics /var/log/resticprofile
+          sudo install -m 0644 -o root -g root etc/resticprofile.yaml "${CONFIG}"
+
+      - name: "Write credentials"
+        env:
+          RESTIC_PASSWORD: ${{ secrets.RESTIC_PASSWORD }}
+          B2_APPLICATION_KEY_ID: ${{ secrets.B2_APPLICATION_KEY_ID }}
+          B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+        run: |
+          set -euo pipefail
+          for secret in RESTIC_PASSWORD B2_APPLICATION_KEY_ID B2_APPLICATION_KEY; do
+            if [ -z "${!secret:-}" ]; then
+              echo "::error::Repository secret ${secret} is not set, see docs/BACKUP.md"
+              exit 1
+            fi
+          done
+          # Kept out of the systemd units deliberately - anything in `Environment=` is
+          # readable by every user on the box: https://github.com/creativeprojects/resticprofile/issues/367
+          umask 077
+          tmp="$(mktemp)"
+          trap 'rm -f "${tmp}"' EXIT
+          {
+            echo "RESTIC_PASSWORD=${RESTIC_PASSWORD}"
+            echo "AWS_ACCESS_KEY_ID=${B2_APPLICATION_KEY_ID}"
+            echo "AWS_SECRET_ACCESS_KEY=${B2_APPLICATION_KEY}"
+          } > "${tmp}"
+          sudo install -m 0600 -o root -g root "${tmp}" /etc/resticprofile/env
+
+      - name: "Validate configuration"
+        run: sudo resticprofile --config "${CONFIG}" profiles
+
+      - name: "Install systemd timers"
+        run: |
+          set -euo pipefail
+          # Unschedule first so timers for profiles that have been removed or renamed
+          # don't linger on the host
+          sudo resticprofile --config "${CONFIG}" unschedule --all || true
+          sudo resticprofile --config "${CONFIG}" schedule --all
+          sudo resticprofile --config "${CONFIG}" status --all
+
+      - name: "Run command"
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.command != 'schedule' }}
+        env:
+          COMMAND: ${{ inputs.command }}
+          PROFILE: ${{ inputs.profile }}
+        run: sudo resticprofile --config "${CONFIG}" --name "${PROFILE}" "${COMMAND}"
