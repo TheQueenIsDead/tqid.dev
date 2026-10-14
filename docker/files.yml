@@ -4,6 +4,7 @@ services:
   # https://filebrowserquantum.com/en/
   files:
     image: "gtstef/filebrowser:beta"
+    container_name: "filebrowser"
     restart: "unless-stopped"
     environment:
       PUID: "1000"
