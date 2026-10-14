@@ -10,34 +10,53 @@ backups keep happening when GitHub or the self-hosted runner is down.
 
 ## What gets backed up
 
+Only data and config that would be slow or impossible to rebuild by hand.
+
 | Profile | Sources | Schedule |
 | --- | --- | --- |
-| `nuc` | `/var/lib/docker/volumes`, `/mnt/unitek/config`, `/mnt/unitek/files` | Daily, 02:00 |
-| `immich` | `/mnt/unitek/immich/dump` (pg_dumpall), `/mnt/unitek/immich/library` | Daily, 03:00 |
+| `apps` | Memos and Mealie volumes; radarr, sonarr, prowlarr, sportarr, qbittorrent, jellyfin, jellyseer and tdarr config under `/mnt/unitek/config` | Daily, 02:00 |
+| `immich` | `library/`, `upload/`, `profile/` and `backups/` under `/mnt/unitek/immich/library` | Daily, 03:00 |
 | `maintenance` | — (`restic check` with `--read-data-subset 5%`) | Sundays, 05:00 |
 
 Retention is 7 daily, 4 weekly, 12 monthly, 3 yearly, pruned after each backup.
 
+Docker is snap-installed on the NUC, so named volumes live under
+`/var/snap/docker/common/var-lib-docker/volumes`, not `/var/lib/docker/volumes`. Volumes from
+compose files without a `name:` carry the `docker_` project prefix (`docker_memos`,
+`docker_mealie-data`). Renaming a compose project renames its volumes, so update the paths in
+`etc/resticprofile.yaml` alongside it.
+
 Deliberately **not** backed up:
 
-- **Media** — `/mnt/unitek/{movies,tv,sport,downloads}`. Large, and re-acquirable.
-- **Caches and transcodes** — jellyfin cache, tdarr cache, immich `thumbs/` and
-  `encoded-video/`. All regenerated from the originals.
+- **Media** — `/mnt/unitek/{movies,tv,sport,downloads,media}`. Large, and re-acquirable.
+- **The file store** — `/mnt/unitek/files`, mostly raw photography. To be culled before it is
+  worth keeping offsite.
+- **Finance apps** — Actual and budge re-sync from Akahu.
+- **Caches, artwork and transcodes** — jellyfin cache, metadata and transcodes, *arr
+  `MediaCover`, tdarr cache, immich `thumbs/` and `encoded-video/`, logs. All regenerated.
+- **Everything else on the host** — Pi-hole, Portainer, Librespeed, Homarr, Filebrowser config,
+  `/etc`. Cheap to recreate, or recreated from this repo.
 - **The live Immich postgres directory** (`/home/tqid/immich/postgres`). Copying a running
-  postgres data directory does not reliably restore. The `immich` profile instead runs
-  `pg_dumpall` into `/mnt/unitek/immich/dump/immich.sql` before each backup and stores that.
+  postgres data directory does not reliably restore. Immich's own nightly dump in `backups/`
+  is stored instead.
+
+## Immich's database
+
+Immich dumps its database every night at 02:00 into `backups/` in the upload folder, and the
+`immich` profile picks that dump up at 03:00. Check it is switched on under **Administration >
+Settings > Backup Settings** — without it the photos are backed up but the albums, people,
+faces and metadata are not.
 
 ## A caveat on consistency
 
-The `nuc` profile copies Docker volumes while the containers are running. restic is
-consistent per file, but not across a database that is mid-write, so a snapshot of a busy
-SQLite app (memos, actual, budge, mealie, the *arr stack) can in principle catch a torn
-write. In practice SQLite's WAL recovers from this, and 02:00 is a quiet hour. Immich is the
-one that genuinely would not survive it, which is why its database is dumped rather than
-copied.
+The `apps` profile copies Memos and Mealie volumes and the *arr config while the containers
+are running. restic is consistent per file, but not across a SQLite database that is
+mid-write, so a snapshot can in principle catch a torn write. In practice SQLite's WAL recovers
+from this, and 02:00 is a quiet hour. The *arr apps also keep their own zipped backups in their
+config folders, which are included.
 
 If that stops being an acceptable trade, the options are a `run-before` that pauses the
-affected containers for the duration, or per-app dumps in the shape of the Immich one.
+affected containers for the duration, or per-app dumps.
 
 ## Backblaze setup
 
@@ -63,7 +82,9 @@ Set these in the repository's Actions secrets:
 | `B2_APPLICATION_KEY_ID` | The `keyID` from the application key. |
 | `B2_APPLICATION_KEY` | The `applicationKey` from the application key. |
 
-> **Keep `RESTIC_PASSWORD` somewhere outside this setup.** It is not recoverable, and without
+> **Keep `RESTIC_PASSWORD` somewhere outside this setup**, along with the other secrets that only
+> live in GitHub and HCP Terraform (`CLOUDFLARE_TOKEN`, `NEWT_ID`/`NEWT_SECRET`, `DB_PASSWORD`,
+> the Grafana tokens). It is not recoverable, and without
 > it the backups are so much noise. A GitHub secret is write-only — it cannot be read back.
 
 The workflow writes all three to `/etc/resticprofile/env` (`0600`, root) and the profiles
@@ -88,15 +109,15 @@ sudo resticprofile status --all
 systemctl list-timers 'resticprofile-*'
 
 # Snapshots, and repo size
-sudo resticprofile --name nuc snapshots
-sudo resticprofile --name nuc stats
+sudo resticprofile --name apps snapshots
+sudo resticprofile --name apps stats
 
 # Run one now, out of band
-sudo resticprofile --name nuc backup
+sudo resticprofile --name apps backup
 
 # Logs
-tail -f /var/log/resticprofile/nuc.log
-journalctl -u resticprofile-backup@profile-nuc.service
+tail -f /var/log/resticprofile/apps.log
+journalctl -u resticprofile-backup@profile-apps.service
 ```
 
 The same runs are available from the Actions tab via the **Restic** workflow's
@@ -110,39 +131,45 @@ repository and credentials already applied, so drive restores through it rather 
 
 ```shell
 # Find the snapshot
-sudo resticprofile --name nuc snapshots
+sudo resticprofile --name apps snapshots
 
 # Everything, somewhere safe to inspect first
-sudo resticprofile --name nuc restore <snapshot-id> --target /mnt/unitek/restore
+sudo resticprofile --name apps restore <snapshot-id> --target /mnt/unitek/restore
 
 # Or one path, back where it came from
-sudo resticprofile --name nuc restore <snapshot-id> --target / --include /mnt/unitek/config/homarr
+sudo resticprofile --name apps restore <snapshot-id> --target / --include /mnt/unitek/config/jellyfin
 
 # Browse before committing to it
-sudo resticprofile --name nuc ls <snapshot-id>
+sudo resticprofile --name apps ls <snapshot-id>
 ```
 
-Restoring Immich is two steps: restore `/mnt/unitek/immich/library`, then load the dump into
-a fresh database.
+Restoring Immich is two steps: restore the four folders under `/mnt/unitek/immich/library`,
+then load the newest dump from `backups/` into a fresh database.
 
 ```shell
 docker compose -f docker/immich.yml up -d database
-cat /mnt/unitek/immich/dump/immich.sql | docker exec -i immich_postgres psql --username=postgres
+gunzip --stdout /mnt/unitek/immich/library/backups/<newest>.sql.gz \
+  | docker exec -i immich_postgres psql --username=postgres --dbname=postgres
 docker compose -f docker/immich.yml up --wait
 ```
 
 ## First run
 
-The first `nuc` backup uploads everything and will take a while. `immich` will take longer.
+The first `apps` backup uploads everything and will take a while. `immich` will take longer.
 Both are `priority: low` and `ionice` class 2/7, so they should stay out of the way, but it's
 worth kicking the first one off manually rather than finding out at 02:00.
 
 A restore is the only real test of a backup. Worth doing once, now, before it matters.
 
-## Possible follow-ups
+## Monitoring
 
-- The profiles write a status file to `/var/lib/resticprofile/status.json`. resticprofile can
-  also emit Prometheus metrics (`prometheus-save-to-file`), which
-  [Alloy](../etc/config.alloy) could scrape to alert on a backup that stopped running.
-- A `send-after-fail` hook could push a failure to a webhook rather than relying on someone
-  noticing the timer went quiet.
+Each backup writes its result to `/var/lib/resticprofile/metrics/<profile>.prom`. Alloy reads
+that directory with node exporter's textfile collector (`etc/alloy/node.alloy`), and the `Host`
+alert group in `terraform/grafana/alerts.tf` raises:
+
+- **Backup failed** — `resticprofile_backup_status` is 0 (1 is a warning, 2 a success).
+- **Backup stale** — a profile's metrics file has not been written in over 26 hours, i.e. the
+  timer has stopped.
+
+Removing a profile leaves its `.prom` file behind, which will then alert as stale; delete the
+file on the NUC when you retire a profile.

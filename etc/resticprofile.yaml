@@ -29,6 +29,8 @@ default:
   initialize: true
   force-inactive-lock: true
   status-file: "/var/lib/resticprofile/status.json"
+  # Read by Alloy's node exporter textfile collector, so a failed or stale backup alerts
+  prometheus-save-to-file: "/var/lib/resticprofile/metrics/{{ .Profile.Name }}.prom"
 
   backup:
     verbose: true
@@ -54,53 +56,60 @@ default:
     path: false
     prune: true
 
-# Everything that lives on the NUC itself: the docker named volumes (memos, actual,
-# budge, pihole, mealie-data, librespeed, portainer_data) plus the bind-mounted app
-# config and file store on the Unitek drive.
-nuc:
+# Docker is snap-installed on the NUC, so its data root is here rather than /var/lib/docker.
+# Volumes from compose files without a `name:` take the `docker_` project prefix.
+# Paths are spelled out per volume, so a renamed volume fails loudly in restic rather than
+# silently dropping out of the backup.
+
+# Application data and config: the things that are slow or impossible to rebuild by hand.
+# Media is deliberately absent - it is large and re-acquirable.
+apps:
   inherit: "default"
   backup:
     tag:
-      - "nuc"
+      - "apps"
     source:
-      - "/var/lib/docker/volumes"
-      - "/mnt/unitek/config"
-      - "/mnt/unitek/files"
+      # Notes and recipes
+      - "/var/snap/docker/common/var-lib-docker/volumes/docker_memos/_data"
+      - "/var/snap/docker/common/var-lib-docker/volumes/docker_mealie-data/_data"
+      # Media stack config: indexers, quality profiles, history, users, watch state, flows
+      - "/mnt/unitek/config/radarr"
+      - "/mnt/unitek/config/sonarr"
+      - "/mnt/unitek/config/prowlarr"
+      - "/mnt/unitek/config/sportarr"
+      - "/mnt/unitek/config/qbittorrent"
+      - "/mnt/unitek/config/jellyfin"
+      - "/mnt/unitek/config/jellyseer"
+      - "/mnt/unitek/config/tdarr/server"
+      - "/mnt/unitek/config/tdarr/configs"
     exclude:
-      # Docker's own scratch, not data
-      - "/var/lib/docker/volumes/backingFsBlockDev"
-      - "/var/lib/docker/volumes/metadata.db"
-      # Regenerable caches and transcodes - large, and worthless in a restore
+      # Artwork and caches - re-downloaded or regenerated, and the bulk of the size
+      - "/mnt/unitek/config/radarr/MediaCover"
+      - "/mnt/unitek/config/sonarr/MediaCover"
       - "/mnt/unitek/config/jellyfin/cache"
+      - "/mnt/unitek/config/jellyfin/data/metadata"
       - "/mnt/unitek/config/jellyfin/data/transcodes"
       - "/mnt/unitek/config/jellyfin/data/subtitles"
-      - "/mnt/unitek/config/tdarr/cache"
-      - "/mnt/unitek/config/tdarr/logs"
-      - "/mnt/unitek/config/qbittorrent/data/logs"
-      - "/mnt/unitek/config/files/tmp"
+      - "**/logs"
+      - "**/log"
       - "**/*.log"
       - "**/.cache"
     schedule:
       - "*-*-* 02:00:00"
 
-# Immich is split out: the library is large and slow to push, and the database has to
-# be dumped rather than copied - a live postgres data directory does not restore.
+# Immich is split out because the library is large and slow to push. The database is not
+# copied live - Immich dumps it nightly at 02:00 into backups/ (Administration > Settings >
+# Backup Settings), and that dump is what gets stored here.
 immich:
   inherit: "default"
-  run-before:
-    - "mkdir -p /mnt/unitek/immich/dump"
-    # Atomic write, so a failed dump can never overwrite the last good one
-    - "sh -c 'docker exec -t immich_postgres pg_dumpall --clean --if-exists --username=postgres > /mnt/unitek/immich/dump/immich.sql.tmp && mv /mnt/unitek/immich/dump/immich.sql.tmp /mnt/unitek/immich/dump/immich.sql'"
   backup:
     tag:
       - "immich"
     source:
-      - "/mnt/unitek/immich/dump"
-      - "/mnt/unitek/immich/library"
-    exclude:
-      # Immich regenerates both of these from the originals
-      - "/mnt/unitek/immich/library/thumbs"
-      - "/mnt/unitek/immich/library/encoded-video"
+      - "/mnt/unitek/immich/library/library"
+      - "/mnt/unitek/immich/library/upload"
+      - "/mnt/unitek/immich/library/profile"
+      - "/mnt/unitek/immich/library/backups"
     schedule:
       - "*-*-* 03:00:00"
 
@@ -119,5 +128,5 @@ maintenance:
 
 groups:
   all:
-    - "nuc"
+    - "apps"
     - "immich"
