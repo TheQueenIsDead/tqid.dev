@@ -66,6 +66,19 @@ locals {
       description = "Alloy has failed to scrape {{ $labels.job }} ({{ $labels.instance }}) for 5m; the service may be down."
     }
 
+    # From the Synthetic Monitoring checks in synthetics.tf, so this sees what visitors see.
+    "Site down" = {
+      datasource  = "prometheus"
+      expr        = "avg by (job, instance) (avg_over_time(probe_success[15m]))"
+      threshold   = 0.5
+      comparison  = "lt"
+      for         = "10m"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "{{ $labels.job }} is down"
+      description = "Only {{ humanizePercentage $values.A.Value }} of external checks against {{ $labels.instance }} succeeded over the last 15m."
+    }
+
     "Cloudflare tunnel down" = {
       datasource  = "prometheus"
       expr        = "sum(cloudflared_tunnel_ha_connections)"
