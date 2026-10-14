@@ -3,6 +3,7 @@ version: "3.8"
 services:
   budge:
     image: "ghcr.io/thequeenisdead/budge:1.15.2"
+    container_name: "budge"
     pull_policy: "always"
     restart: "unless-stopped"
     environment:
@@ -18,6 +19,7 @@ services:
 
   chat:
     image: "ghcr.io/thequeenisdead/go-chat:1.2.0"
+    container_name: "chat"
     pull_policy: "always"
     restart: "unless-stopped"
     expose:
