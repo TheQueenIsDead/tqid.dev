@@ -3,6 +3,7 @@ name: "actual"
 services:
   actual:
     image: "docker.io/actualbudget/actual-server:26.10.0-alpine"
+    container_name: "actual"
     restart: "unless-stopped"
     environment:
       # See all options and more details at https://actualbudget.org/docs/config/

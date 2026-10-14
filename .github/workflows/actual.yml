@@ -40,7 +40,7 @@ jobs:
             -e AKAHU_APP_TOKEN=${AKAHU_APP_TOKEN} \
             -e AKAHU_USER_TOKEN=${AKAHU_USER_TOKEN} \
             -e ACCOUNT_MAPPINGS='{"acc_cm0p60xmh000008mi9ugtd6y7":"520553d7-4269-4631-99c9-e369a9719fc3", "acc_cm0p62fbp000508mi09okfg9b":"a0db15f1-ae02-40b6-b357-9b96376b7680", "acc_cm0p62fct000808mi5kyy0cqe":"07bf098a-368d-4bc0-b726-0529694c62c9", "acc_cm0p62fbr000608mi8a3k9krh":"04d1ace1-d0c1-44f1-8b4e-3a8c6fed158d", "acc_cm0p62fc8000708mi312e75sk":"f2149991-720c-4d35-8400-59f458656940", "acc_cm27xdmo9000008m956qshr19":"922d5c17-da15-49d1-b728-e1148ff3f735", "acc_cm27xdmov000108m9a6v04u22":"85743915-4f3b-481b-b7b7-a85c1f57cf9b"}' \
-            -e ACTUAL_SERVER_URL=http://actual-actual-1:5006 \
+            -e ACTUAL_SERVER_URL=http://actual:5006 \
             -e ACTUAL_PASSWORD=${ACTUAL_PASSWORD} \
             -e ACTUAL_SYNC_ID=30b49c9e-17a4-499d-8163-730a70b61f35 \
             -e DAYS_TO_FETCH=$DAYS  \
