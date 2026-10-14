@@ -65,6 +65,7 @@ prometheus.relabel "host" {
 			"node_textfile_mtime_seconds",
 			"node_textfile_scrape_error",
 			"resticprofile_backup_(status|time_seconds|duration_seconds|added_bytes)",
+			"resticprofile_check_success",
 			// Info
 			"node_boot_time_seconds",
 			"node_uname_info",

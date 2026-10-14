@@ -128,6 +128,13 @@ maintenance:
     schedule-permission: "system"
     schedule-lock-wait: "2h"
     schedule-log: "/var/log/resticprofile/maintenance.log"
+    # resticprofile only writes metrics for backups, so record the check result in the same
+    # textfile directory for Alloy to pick up. Written to a temp file and moved so the
+    # collector never reads a half-written file.
+    run-after:
+      - "echo 'resticprofile_check_success 1' > /var/lib/resticprofile/metrics/maintenance.prom.tmp && mv /var/lib/resticprofile/metrics/maintenance.prom.tmp /var/lib/resticprofile/metrics/maintenance.prom"
+    run-after-fail:
+      - "echo 'resticprofile_check_success 0' > /var/lib/resticprofile/metrics/maintenance.prom.tmp && mv /var/lib/resticprofile/metrics/maintenance.prom.tmp /var/lib/resticprofile/metrics/maintenance.prom"
 
 groups:
   all:
