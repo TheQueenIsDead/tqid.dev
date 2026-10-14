@@ -34,7 +34,7 @@ Deliberately **not** backed up:
 - **Finance apps** — Actual and budge re-sync from Akahu.
 - **Caches, artwork and transcodes** — jellyfin cache, metadata and transcodes, *arr
   `MediaCover`, tdarr cache, immich `thumbs/` and `encoded-video/`, logs. All regenerated.
-- **Everything else on the host** — Pi-hole, Portainer, Librespeed, Homarr, Filebrowser config,
+- **Everything else on the host** — Portainer, Librespeed, Homarr, Filebrowser config,
   `/etc`. Cheap to recreate, or recreated from this repo.
 - **The live Immich postgres directory** (`/home/tqid/immich/postgres`). Copying a running
   postgres data directory does not reliably restore. Immich's own nightly dump in `backups/`
