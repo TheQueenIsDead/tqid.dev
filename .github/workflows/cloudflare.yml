@@ -16,4 +16,5 @@ jobs:
       CLOUDFLARE_TOKEN: ${{ secrets.cloudflare_token }}
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/networks
       - run: docker compose -f docker/cloudflare.yml up --wait

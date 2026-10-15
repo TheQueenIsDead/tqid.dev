@@ -23,4 +23,5 @@ jobs:
       DB_PASSWORD: ${{ secrets.IMMICH_DB_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/networks
       - run: docker compose -f docker/immich.yml up --wait

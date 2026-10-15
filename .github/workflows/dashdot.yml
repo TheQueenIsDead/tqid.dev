@@ -16,4 +16,5 @@ jobs:
       CONFIG_FOLDER: "/mnt/unitek/config"
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/networks
       - run: docker compose -f docker/dashdot.yml up --wait

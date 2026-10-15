@@ -14,4 +14,5 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/networks
       - run: docker compose -f docker/tqid.yml up --wait

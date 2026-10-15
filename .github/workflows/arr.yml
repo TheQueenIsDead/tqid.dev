@@ -22,4 +22,5 @@ jobs:
       HOMARR_ENCRYPTION_KEY: ${{ secrets.HOMARR_ENCRYPTION_KEY }}
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/networks
       - run: docker compose -f docker/arr.yml up --wait

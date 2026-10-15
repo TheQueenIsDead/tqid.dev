@@ -17,4 +17,5 @@ jobs:
       FILES_FOLDER: "/mnt/unitek/files"
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/networks
       - run: docker compose -f docker/files.yml up --wait

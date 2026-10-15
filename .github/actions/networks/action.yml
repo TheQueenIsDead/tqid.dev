@@ -1,0 +1,19 @@
+name: "Docker networks"
+description: "Create the shared Docker networks the compose files attach to as external, if missing"
+
+# Compose only creates networks for the stack that uses them, so the networks shared across
+# stacks are created here instead, before any `docker compose up`. Idempotent, so every deploy
+# workflow can run it and deploy order doesn't matter.
+#   edge:    internet-facing tunnels (cloudflared) and Traefik
+#   backend: Traefik and the apps it routes to
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        for network in edge backend; do
+          if ! docker network inspect "${network}" >/dev/null 2>&1; then
+            docker network create "${network}"
+          fi
+        done
