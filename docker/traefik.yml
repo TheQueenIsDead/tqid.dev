@@ -4,14 +4,17 @@ services:
   traefik:
     image: "traefik:v3.7"
     container_name: "traefik"
+    networks:
+      - "edge"
+      - "backend"
     restart: "unless-stopped"
     command:
       - "--log.level=INFO"
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      # Containers on several networks must be reached via the shared one, or Traefik may pick an IP it can't route to
-      - "--providers.docker.network=docker_default"
+      # Containers on several networks must be reached via backend, or Traefik may pick an IP it can't route to
+      - "--providers.docker.network=backend"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.transport.respondingTimeouts.readTimeout=120s"
       - "--entrypoints.web.transport.respondingTimeouts.idleTimeout=120s"
@@ -30,4 +33,7 @@ services:
       - "traefik.http.routers.dashboard.entrypoints=web"
 
 networks:
-  default:
+  edge:
+    external: true
+  backend:
+    external: true

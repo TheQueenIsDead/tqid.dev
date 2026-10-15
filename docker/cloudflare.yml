@@ -4,6 +4,8 @@ services:
   cloudflared:
     image: "cloudflare/cloudflared:2026.10.0"
     container_name: "cloudflared"
+    networks:
+      - "edge"
     restart: "unless-stopped"
     command:
       - "tunnel"
@@ -18,4 +20,5 @@ services:
       - "alloy.metrics.port=2000"
 
 networks:
-  default:
+  edge:
+    external: true
