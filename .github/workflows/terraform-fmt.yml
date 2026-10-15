@@ -1,0 +1,26 @@
+name: "Terraform Format"
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/terraform-fmt.yml
+      - terraform/**
+
+jobs:
+  fmt:
+    # GitHub-hosted on purpose: PR code should never run on the self-hosted runner.
+    runs-on: ubuntu-latest
+    env:
+      # renovate: datasource=github-releases depName=hashicorp/terraform extractVersion=^v(?<version>.+)$
+      TERRAFORM_VERSION: "1.16.5"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      # Formatting only: plans need credentials and run in HCP Terraform instead.
+      - name: Check formatting
+        run: terraform fmt -check -recursive -diff terraform/
