@@ -31,8 +31,9 @@ resource "grafana_message_template" "discord" {
     {{ define "discord.message" -}}
     {{ range .Alerts -}}
     **{{ if eq .Status "firing" }}Firing{{ else }}Resolved{{ end }}**{{ with .Labels.severity }} · {{ . }}{{ end }}
-    {{ with .Annotations.description }}{{ . }}
-    {{ end -}}
+    {{- /* The description is captured when the alert fires, so it describes the problem, not the recovery */}}
+    {{ if eq .Status "firing" }}{{ with .Annotations.description }}{{ . }}
+    {{ end }}{{ end -}}
     Started <t:{{ .StartsAt.Unix }}:R>{{ if eq .Status "resolved" }}, resolved <t:{{ .EndsAt.Unix }}:R> ({{ template "discord.duration" . }}){{ end }}
     {{ $rule := match "^https?://" .GeneratorURL }}{{ if $rule }}[View rule]({{ .GeneratorURL }}){{ end }}{{ if eq .Status "firing" }}{{ with .SilenceURL }}{{ if $rule }} · {{ end }}[Silence]({{ . }}){{ end }}{{ end }}
 
