@@ -10,6 +10,9 @@ data "cloudflare_zero_trust_access_identity_provider" "github" {
 data "cloudflare_zero_trust_tunnel_cloudflared" "nuc" {
   account_id = var.cloudflare_account_id
   name       = "nuc"
+  # Unset, the lookup also matches deleted tunnels, and once returned a deleted "nuc"
+  # (e8ac3e02-...) instead of the live one, which is why the IDs below were pinned for a while.
+  is_deleted = false
 }
 
 resource "cloudflare_zero_trust_access_policy" "github" {
@@ -57,19 +60,15 @@ resource "cloudflare_record" "http_app" {
   for_each = { for k, v in var.subdomains : v.name => v }
   zone_id  = data.cloudflare_zone.this.id
   name     = each.value.name
-  # content = "${data.cloudflare_zero_trust_tunnel_cloudflared.nuc.id}.cfargotunnel.com"
-  content = "f560b8a9-8e4d-4292-8c91-2a4636c3c21c.cfargotunnel.com"
-  # "f560b8a9-8e4d-4292-8c91-2a4636c3c21c.cfargotunnel.com" # Working CNAME
-  # "e8ac3e02-ae53-4d98-9644-cfe379deb464.cfargotunnel.com" # Data tunnel
-  type    = "CNAME"
-  ttl     = 1
-  proxied = true
+  content  = "${data.cloudflare_zero_trust_tunnel_cloudflared.nuc.id}.cfargotunnel.com"
+  type     = "CNAME"
+  ttl      = 1
+  proxied  = true
 }
 
 resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
   account_id = var.cloudflare_account_id
-  #   tunnel_id  = data.cloudflare_zero_trust_tunnel_cloudflared.nuc.id
-  tunnel_id = "f560b8a9-8e4d-4292-8c91-2a4636c3c21c"
+  tunnel_id  = data.cloudflare_zero_trust_tunnel_cloudflared.nuc.id
   config {
     origin_request {
       bastion_mode             = false

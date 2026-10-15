@@ -10,8 +10,9 @@ terraform {
   }
   required_providers {
     cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = ">= 4"
+      source = "cloudflare/cloudflare"
+      # v5 rewrote the Zero Trust resources used here; upgrade deliberately, not via init -upgrade
+      version = "~> 4.52"
     }
   }
 }
