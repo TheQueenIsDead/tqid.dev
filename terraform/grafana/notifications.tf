@@ -23,12 +23,17 @@ resource "grafana_message_template" "discord" {
     {{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} {{ .CommonLabels.alertname }}{{ with .CommonAnnotations.summary }}: {{ . }}{{ end }}
     {{- end }}
 
+    {{/* How long an alert fired: seconds under a minute, otherwise rounded to minutes, e.g. 43m, 2h6m */}}
+    {{ define "discord.duration" -}}
+    {{ $d := .EndsAt.Sub .StartsAt }}{{ if lt $d.Seconds 60.0 }}{{ $d.Round 1000000000 }}{{ else }}{{ reReplaceAll "0s$" "" (printf "%s" ($d.Round 60000000000)) }}{{ end }}
+    {{- end }}
+
     {{ define "discord.message" -}}
     {{ range .Alerts -}}
     **{{ if eq .Status "firing" }}Firing{{ else }}Resolved{{ end }}**{{ with .Labels.severity }} · {{ . }}{{ end }}
     {{ with .Annotations.description }}{{ . }}
     {{ end -}}
-    Started <t:{{ .StartsAt.Unix }}:R>{{ if eq .Status "resolved" }}, resolved <t:{{ .EndsAt.Unix }}:R>{{ end }}
+    Started <t:{{ .StartsAt.Unix }}:R>{{ if eq .Status "resolved" }}, resolved <t:{{ .EndsAt.Unix }}:R> ({{ template "discord.duration" . }}){{ end }}
     {{ $rule := match "^https?://" .GeneratorURL }}{{ if $rule }}[View rule]({{ .GeneratorURL }}){{ end }}{{ if eq .Status "firing" }}{{ with .SilenceURL }}{{ if $rule }} · {{ end }}[Silence]({{ . }}){{ end }}{{ end }}
 
     {{ end -}}
