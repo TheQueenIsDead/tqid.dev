@@ -3,12 +3,12 @@ variable "cloudflare_account_id" {
 }
 
 variable "cloudflare_token" {
-  type = string
+  type      = string
   sensitive = true
 }
 
 variable "cloudflare_zone_name" {
-  type = string
+  type    = string
   default = "tqid.dev"
 }
 
@@ -35,7 +35,7 @@ variable "subdomains" {
     { name = "prowlarr" },
     { name = "qbittorrent" },
     { name = "radarr" },
-    { name = "recipes"},
+    { name = "recipes" },
     { name = "sonarr" },
     { name = "speed", public = true },
     { name = "sportarr" },
