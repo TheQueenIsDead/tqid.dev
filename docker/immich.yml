@@ -22,7 +22,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.photos.rule=Host(`photos.tqid.dev`)"
       - "traefik.http.routers.photos.entrypoints=web"
-      - "traefik.docker.network=docker_default"
     depends_on:
       - redis
       - database
@@ -31,7 +30,7 @@ services:
 #      disable: false
     networks:
       - default
-      - shared
+      - backend
 
   immich-machine-learning:
     container_name: immich-machine-learning
@@ -81,6 +80,5 @@ volumes:
 
 networks:
   default:
-  shared:
-    name: docker_default
+  backend:
     external: true

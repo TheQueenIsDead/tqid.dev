@@ -4,6 +4,8 @@ services:
   librespeed:
     image: "lscr.io/linuxserver/librespeed:6.2.0"
     container_name: "librespeed"
+    networks:
+      - "backend"
     restart: "unless-stopped"
     environment:
       - "PUID=1000"
@@ -24,4 +26,5 @@ volumes:
   librespeed:
 
 networks:
-  default:
+  backend:
+    external: true

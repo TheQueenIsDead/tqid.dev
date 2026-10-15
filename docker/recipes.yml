@@ -2,6 +2,8 @@ services:
   mealie:
     image: "ghcr.io/mealie-recipes/mealie:v3.1.2"
     container_name: "mealie"
+    networks:
+      - "backend"
     restart: "unless-stopped"
     environment:
       ALLOW_SIGNUP: "false"
@@ -22,4 +24,5 @@ volumes:
   mealie-data:
 
 networks:
-  default:
+  backend:
+    external: true

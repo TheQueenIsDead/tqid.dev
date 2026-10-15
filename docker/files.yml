@@ -10,7 +10,7 @@ services:
       PUID: "1000"
       PGID: "1000"
     networks:
-      - shared
+      - backend
     ports:
       - "5904:80"
     expose:
@@ -28,6 +28,5 @@ services:
       - "traefik.http.routers.files.entrypoints=web"
 
 networks:
-  shared:
-    name: docker_default
+  backend:
     external: true

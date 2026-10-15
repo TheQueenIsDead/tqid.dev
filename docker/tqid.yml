@@ -4,6 +4,8 @@ services:
   budge:
     image: "ghcr.io/thequeenisdead/budge:1.15.2"
     container_name: "budge"
+    networks:
+      - "backend"
     pull_policy: "always"
     restart: "unless-stopped"
     environment:
@@ -20,6 +22,8 @@ services:
   chat:
     image: "ghcr.io/thequeenisdead/go-chat:1.2.0"
     container_name: "chat"
+    networks:
+      - "backend"
     pull_policy: "always"
     restart: "unless-stopped"
     expose:
@@ -33,4 +37,5 @@ volumes:
   budge:
 
 networks:
-  default:
+  backend:
+    external: true

@@ -20,15 +20,12 @@ services:
       - "9443"
 #      - "8000" # Remove if you do not intend to use Edge Agents
     networks:
-      - default
-      - shared
+      - backend
 
 volumes:
   portainer_data:
     name: portainer_data
 
 networks:
-  default:
-  shared:
-    name: docker_default
+  backend:
     external: true

@@ -4,6 +4,8 @@ services:
   memos:
     image: "neosmemo/memos:0.31.0"
     container_name: "memos"
+    networks:
+      - "backend"
     restart: "unless-stopped"
     volumes:
       - "memos:/var/opt/memos"
@@ -18,4 +20,5 @@ volumes:
   memos:
 
 networks:
-  default:
+  backend:
+    external: true

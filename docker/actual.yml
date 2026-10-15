@@ -20,7 +20,7 @@ services:
       retries: "3"
       start_period: "20s"
     networks:
-      - "shared"
+      - "backend"
     ports:
       - "5006:5006" # Expose port 5006 to the host for cron-based syncs
     expose:
@@ -34,7 +34,5 @@ volumes:
   actual:
 
 networks:
-  default:
-  shared:
-    name: docker_default
+  backend:
     external: true

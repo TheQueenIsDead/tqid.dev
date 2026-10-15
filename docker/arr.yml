@@ -19,10 +19,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.radarr.entrypoints=web"
       - "traefik.http.routers.radarr.rule=Host(`radarr.tqid.dev`)"
-      - "traefik.docker.network=docker_default"
     networks:
-      - default
-      - shared
+      - backend
 
   sonarr:
     image: "lscr.io/linuxserver/sonarr:4.0.19"
@@ -42,10 +40,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.sonarr.entrypoints=web"
       - "traefik.http.routers.sonarr.rule=Host(`sonarr.tqid.dev`)"
-      - "traefik.docker.network=docker_default"
     networks:
-      - default
-      - shared
+      - backend
 
   prowlarr:
     image: "lscr.io/linuxserver/prowlarr:2.5.2"
@@ -63,10 +59,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.prowlarr.entrypoints=web"
       - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.tqid.dev`)"
-      - "traefik.docker.network=docker_default"
     networks:
-      - default
-      - shared
+      - backend
 
   sportarr:
     image: "sportarr/sportarr:4.1.9.1119"
@@ -87,10 +81,8 @@ services:
       - "traefik.http.routers.sportarr.entrypoints=web"
       - "traefik.http.routers.sportarr.rule=Host(`sportarr.tqid.dev`)"
       - "traefik.http.services.sportarr.loadbalancer.server.port=1867"
-      - "traefik.docker.network=docker_default"
     networks:
-      - default
-      - shared
+      - backend
 
   qbittorrent:
     image: "lscr.io/linuxserver/qbittorrent:5.2.3"
@@ -111,10 +103,8 @@ services:
       - "traefik.http.routers.qbittorrent.entrypoints=web"
       - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.tqid.dev`)"
       - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
-      - "traefik.docker.network=docker_default"
     networks:
-      - default
-      - shared
+      - backend
 
   jellyfin:
     image: "lscr.io/linuxserver/jellyfin:10.11.11"
@@ -144,10 +134,8 @@ services:
       - "traefik.http.routers.jellyfin.entrypoints=web"
       - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.tqid.dev`)"
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
-      - "traefik.docker.network=docker_default"
     networks:
-      - default
-      - shared
+      - backend
 
   tdarr:
     image: "ghcr.io/haveagitgat/tdarr:2.86.01"
@@ -190,10 +178,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.tdarr.entrypoints=web"
       - "traefik.http.routers.tdarr.rule=Host(`tdarr.tqid.dev`)"
-      - "traefik.docker.network=docker_default"
     networks:
-      - default
-      - shared
+      - backend
 
   jellyseerr:
     image: "ghcr.io/seerr-team/seerr:v3.4.1"
@@ -217,10 +203,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.jellyseer.entrypoints=web"
       - "traefik.http.routers.jellyseer.rule=Host(`jellyseer.tqid.dev`)"
-      - "traefik.docker.network=docker_default"
     networks:
-      - default
-      - shared
+      - backend
 
   homarr:
     container_name: homarr
@@ -238,13 +222,9 @@ services:
       - "traefik.http.routers.homarr.entrypoints=web"
       - "traefik.http.routers.homarr.rule=Host(`home.tqid.dev`)"
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
-      - "traefik.docker.network=docker_default"
     networks:
-      - default
-      - shared
+      - backend
 
 networks:
-  default:
-  shared:
-    name: docker_default
+  backend:
     external: true

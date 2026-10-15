@@ -15,9 +15,8 @@ services:
     volumes:
       - "/:/mnt/host:ro"
     networks:
-      - arr
+      - backend
 
 networks:
-  arr:
+  backend:
     external: true
-    name: arr_default
