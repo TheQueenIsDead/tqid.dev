@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # renovate: datasource=github-releases depName=hashicorp/terraform extractVersion=^v(?<version>.+)$
-      TERRAFORM_VERSION: "1.16.6"
+      TERRAFORM_VERSION: "1.17.0"
     steps:
       - uses: actions/checkout@v7
 
