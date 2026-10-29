@@ -12,7 +12,7 @@ terraform {
     cloudflare = {
       source = "cloudflare/cloudflare"
       # v5 rewrote the Zero Trust resources used here; upgrade deliberately, not via init -upgrade
-      version = "~> 4.52"
+      version = "~> 5.0"
     }
   }
 }
