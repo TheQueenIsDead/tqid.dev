@@ -120,15 +120,51 @@ locals {
 
     "Logs quota forecast" = {
       datasource = "usage"
-      # Monthly volume projected from the last 24h, against the free tier's 50GB.
-      expr        = "sum(avg_over_time(grafanacloud_logs_instance_billable_bytes_received_per_second[24h])) * 86400 * 30 / 1e9"
-      threshold   = 40
+      # Fraction of the monthly quota used by month end: GB used so far, plus the last 6h's rate over the
+      # seconds left in the (UTC) month.
+      expr        = <<-EOT
+        (
+          sum(grafanacloud_org_logs_usage)
+          +
+          sum(avg_over_time(grafanacloud_logs_instance_billable_bytes_received_per_second[6h]))
+          * ((days_in_month() - day_of_month() + 1) * 86400 - time() % 86400) / 1e9
+        )
+        / sum(grafanacloud_org_logs_included_usage)
+      EOT
+      threshold   = 1
       comparison  = "gt"
       for         = "1h"
       no_data     = "OK"
       severity    = "warning"
       summary     = "Logs on track to exceed the free tier"
-      description = "The last 24h of ingestion projects to {{ humanize $values.A.Value }}GB/month; the free tier allows 50GB before logs are dropped."
+      description = "At the last 6h's rate, logs will reach {{ humanizePercentage $values.A.Value }} of the monthly quota by month end; logs are dropped once it is used up."
+    }
+
+    # Backstop on what has actually been used, whatever the current rate. Normal months use well under 1%.
+    "Logs quota half used" = {
+      datasource  = "usage"
+      expr        = "sum(grafanacloud_org_logs_usage) / sum(grafanacloud_org_logs_included_usage)"
+      threshold   = 0.5
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "Over half the monthly logs quota is used"
+      description = "{{ humanizePercentage $values.A.Value }} of this month's logs quota is used; logs are dropped once it is used up."
+    }
+
+    # Per source, so a single noisy container (e.g. one stuck in an error loop) is named, and caught hours
+    # before the 24h forecast would. Usage metrics have no per-source labels, so this reads Loki directly.
+    "Noisy log source" = {
+      datasource  = "loki"
+      expr        = "sum by (job, container) (bytes_rate({job=~\".+\"}[1h])) * 86400 * 30 / 1e9"
+      threshold   = 10
+      comparison  = "gt"
+      for         = "30m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ or $labels.container $labels.job }} is logging heavily"
+      description = "The last hour of logs from {{ or $labels.container $labels.job }} projects to {{ humanize $values.A.Value }}GB/month, a fifth of the free tier's 50GB on its own."
     }
 
     "Active series near limit" = {
