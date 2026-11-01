@@ -167,29 +167,31 @@ locals {
       description = "The last hour of logs from {{ or $labels.container $labels.job }} projects to {{ humanize $values.A.Value }}GB/month, a fifth of the free tier's 50GB on its own."
     }
 
-    "Active series near limit" = {
+    # Billable series already account for both series count and scrape rate (the free tier covers 1 data
+    # point per minute per series), so faster scrapes use it up just like more series.
+    "Metrics quota near limit" = {
       datasource  = "usage"
-      expr        = "sum(grafanacloud_instance_active_series)"
-      threshold   = 8000
+      expr        = "sum(grafanacloud_org_metrics_billable_series) / sum(grafanacloud_org_metrics_included_series)"
+      threshold   = 0.8
       comparison  = "gt"
       for         = "1h"
       no_data     = "OK"
       severity    = "warning"
-      summary     = "Active metric series near the free tier limit"
-      description = "{{ $values.A.Value }} active series; the free tier allows 10k. Check the allowlists in etc/alloy."
+      summary     = "Metrics near the free tier limit"
+      description = "This month's billable series are at {{ humanizePercentage $values.A.Value }} of the free tier. Check scrape intervals and allowlists in etc/alloy."
     }
 
-    # The free tier covers 10k series at 1 data point per minute; faster scrapes use it up just like more series.
-    "Metrics ingestion rate near limit" = {
-      datasource  = "usage"
-      expr        = "sum(grafanacloud_instance_samples_per_second) * 60"
-      threshold   = 8000
+    # Per job, so a cardinality explosion (e.g. a broken cAdvisor or Traefik allowlist) is named.
+    "Noisy metrics source" = {
+      datasource  = "prometheus"
+      expr        = "count by (job) ({__name__=~\".+\"})"
+      threshold   = 2500
       comparison  = "gt"
-      for         = "1h"
+      for         = "30m"
       no_data     = "OK"
       severity    = "warning"
-      summary     = "Metrics ingestion near the free tier limit"
-      description = "Ingesting {{ humanize $values.A.Value }} data points per minute; the free tier allows about 10k. Check scrape intervals and allowlists in etc/alloy."
+      summary     = "{{ $labels.job }} has too many metric series"
+      description = "{{ $labels.job }} has {{ $values.A.Value }} active series, a quarter of the free tier's 10k on its own. Check its allowlist in etc/alloy."
     }
   }
 
