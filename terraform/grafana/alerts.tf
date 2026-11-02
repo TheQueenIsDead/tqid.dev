@@ -54,6 +54,20 @@ locals {
       description = "{{ $labels.container }} logged {{ $values.A.Value }} error lines in the last 5m."
     }
 
+    # A steady trickle of errors (e.g. an import retried every few minutes) never trips the spike alert above.
+    # Requiring it every hour for 3h keeps one-off bursts out.
+    "Persistent errors" = {
+      datasource  = "loki"
+      expr        = "sum by (container) (count_over_time({job=\"integrations/docker\"} | detected_level=~\"error|fatal|critical\" [1h]))"
+      threshold   = 10
+      comparison  = "gt"
+      for         = "3h"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.container }} keeps logging errors"
+      description = "{{ $labels.container }} has logged errors every hour for 3h ({{ $values.A.Value }} in the last hour); something is likely stuck retrying."
+    }
+
     "Metrics target down" = {
       datasource  = "prometheus"
       expr        = "up == 0"
@@ -94,6 +108,19 @@ locals {
 
   # Alerts that telemetry is being lost, or is about to be, on the Grafana Cloud free tier.
   observability_alerts = {
+    # Dead man's switch for log collection; Host down only notices when metrics stop.
+    "No container logs" = {
+      datasource  = "loki"
+      expr        = "sum(count_over_time({job=\"integrations/docker\"}[15m]))"
+      threshold   = 1
+      comparison  = "lt"
+      for         = "5m"
+      no_data     = "Alerting"
+      severity    = "critical"
+      summary     = "No container logs are reaching Grafana Cloud"
+      description = "Loki has received no Docker logs for 15m; Alloy's log collection or delivery is broken."
+    }
+
     "Logs being discarded" = {
       datasource  = "usage"
       expr        = "sum by (reason) (grafanacloud_logs_instance_discarded_bytes_per_second)"

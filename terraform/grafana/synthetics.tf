@@ -1,9 +1,10 @@
 locals {
   # Public sites probed from outside the network. Keys become the check's job name.
+  # Health endpoints where the app has one, so the check tests the app rather than a login redirect.
   synthetic_checks = {
-    "Immich"     = "https://photos.tqid.dev"
-    "Jellyfin"   = "https://jellyfin.tqid.dev"
-    "Jellyseerr" = "https://jellyseer.tqid.dev"
+    "Immich"     = "https://photos.tqid.dev/api/server/ping"
+    "Jellyfin"   = "https://jellyfin.tqid.dev/health"
+    "Jellyseerr" = "https://jellyseer.tqid.dev/api/v1/status"
     "Chat"       = "https://chat.tqid.dev"
     "Speedtest"  = "https://speed.tqid.dev"
   }
