@@ -146,6 +146,27 @@ locals {
       summary     = "{{ $labels.client }} keeps failing to log in to {{ $labels.RequestHost }}"
       description = "{{ $labels.client }} was refused {{ $values.A.Value }} times by {{ $labels.RequestHost }} in the last 10m. If it isn't you, block it in Cloudflare (Security > WAF > Tools)."
     }
+
+    # From tdarr-exporter: how many files' last transcode or health check failed. These are snapshot
+    # counts, so a rise over the last hour means new failures (requeueing a file lowers it again).
+    "Tdarr jobs failing" = {
+      datasource  = "prometheus"
+      panel       = ["overview", "Transcode errors"]
+      expr        = <<-EOT
+        sum by (kind) (
+          label_replace(delta(tdarr_library_transcodes{status="error"}[1h]), "kind", "transcode", "", "")
+          or
+          label_replace(delta(tdarr_library_health_checks{status="error"}[1h]), "kind", "health check", "", "")
+        )
+      EOT
+      threshold   = 0.5
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "Tdarr {{ $labels.kind }}s are failing"
+      description = "{{ humanize $values.A.Value }} more files failed their {{ $labels.kind }} in the last hour. Tdarr lists them under the library's error tab; their job reports are in Loki under {job=\"tdarr/job-reports\"}."
+    }
   }
 
   # Alerts that telemetry is being lost, or is about to be, on the Grafana Cloud free tier.
@@ -666,7 +687,7 @@ resource "grafana_rule_group" "tqid" {
         contact_point = "Discord"
         # One notification per affected thing, so the Discord template's CommonAnnotations are populated.
         # Listed explicitly rather than "..." so Grafana's internal labels don't end up in the title.
-        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file", "chip", "sensor", "client", "RequestHost", "measure"]
+        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file", "chip", "sensor", "client", "RequestHost", "measure", "kind"]
 
         group_wait      = local.notification_timing.group_wait
         group_interval  = local.notification_timing.group_interval
