@@ -73,14 +73,13 @@ services:
     volumes:
       - '/sys:/sys:ro'
     # Locked down as the project's Helm chart runs it: only PERFMON, which reading the iGPU's
-    # engine counters needs, a read-only filesystem and no privilege escalation.
+    # engine counters needs, and a read-only filesystem. no-new-privileges isn't set: under snap
+    # Docker it stops the binary starting at all ("exec ...: operation not permitted").
     cap_drop:
       - ALL
     cap_add:
       - PERFMON
     read_only: true
-    security_opt:
-      - 'no-new-privileges:true'
     labels:
       - 'alloy.metrics.scrape=true'
       - 'alloy.metrics.port=8081'
