@@ -36,7 +36,7 @@
     {
       "id": 1,
       "type": "row",
-      "title": "Overview",
+      "title": "Now",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -48,12 +48,255 @@
     },
     {
       "id": 2,
+      "type": "table",
+      "title": "Workers",
+      "description": "What each busy Tdarr worker is doing right now. Empty when Tdarr is idle.",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 24,
+        "h": 6
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "expr": "max by (worker_id, worker_type, file) (label_replace(tdarr_node_worker_info, \"file\", \"$1\", \"worker_file\", \".*/([^/]+)$\")) and on (worker_id) (max by (worker_id) (tdarr_node_worker_idle) == 0)",
+          "instant": true,
+          "format": "table",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        },
+        {
+          "expr": "max by (worker_id) (tdarr_node_worker_ratio) and on (worker_id) (max by (worker_id) (tdarr_node_worker_idle) == 0)",
+          "instant": true,
+          "format": "table",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        },
+        {
+          "expr": "max by (worker_id) (tdarr_node_worker_fps) and on (worker_id) (max by (worker_id) (tdarr_node_worker_idle) == 0)",
+          "instant": true,
+          "format": "table",
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        },
+        {
+          "expr": "max by (worker_id) (time() - tdarr_node_worker_job_start_timestamp_seconds) and on (worker_id) (max by (worker_id) (tdarr_node_worker_idle) == 0)",
+          "instant": true,
+          "format": "table",
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        },
+        {
+          "expr": "max by (worker_id) (tdarr_node_worker_eta_seconds) and on (worker_id) (max by (worker_id) (tdarr_node_worker_idle) == 0)",
+          "instant": true,
+          "format": "table",
+          "refId": "E",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        },
+        {
+          "expr": "max by (worker_id) (tdarr_node_worker_est_file_size_bytes / tdarr_node_worker_original_file_size_bytes) and on (worker_id) (max by (worker_id) (tdarr_node_worker_idle) == 0)",
+          "instant": true,
+          "format": "table",
+          "refId": "F",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Progress"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "FPS"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Elapsed"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ETA"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Est. size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 1.1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "worker_id": true,
+              "Value #A": true
+            },
+            "renameByName": {
+              "worker_type": "Worker",
+              "file": "File",
+              "Value #B": "Progress",
+              "Value #C": "FPS",
+              "Value #D": "Elapsed",
+              "Value #E": "ETA",
+              "Value #F": "Est. size"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "row",
+      "title": "Overview",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 4,
       "type": "stat",
       "title": "Transcodes",
       "description": "Transcode jobs started in the time range.",
       "gridPos": {
         "x": 0,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -104,13 +347,13 @@
       }
     },
     {
-      "id": 3,
+      "id": 5,
       "type": "stat",
       "title": "Health checks",
       "description": "",
       "gridPos": {
         "x": 4,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -161,13 +404,13 @@
       }
     },
     {
-      "id": 4,
+      "id": 6,
       "type": "stat",
       "title": "Software encodes",
       "description": "Encodes that ran on the CPU. Each one pegs every core for an hour or more; the Software transcode alert fires on them.",
       "gridPos": {
         "x": 8,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -222,13 +465,13 @@
       }
     },
     {
-      "id": 5,
+      "id": 7,
       "type": "stat",
       "title": "Job errors",
       "description": "Error lines in job reports, excluding the harmless cross-mount move Tdarr retries as a copy.",
       "gridPos": {
         "x": 12,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -283,13 +526,13 @@
       }
     },
     {
-      "id": 6,
+      "id": 8,
       "type": "stat",
       "title": "AV1 files left",
       "description": "",
       "gridPos": {
         "x": 16,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -345,13 +588,13 @@
       }
     },
     {
-      "id": 7,
+      "id": 9,
       "type": "stat",
       "title": "Queued",
       "description": "",
       "gridPos": {
         "x": 20,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -403,26 +646,26 @@
       }
     },
     {
-      "id": 8,
+      "id": 10,
       "type": "row",
       "title": "Jobs",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 5,
+        "y": 12,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 9,
+      "id": 11,
       "type": "timeseries",
       "title": "Jobs started",
       "description": "Jobs started per hour.",
       "gridPos": {
         "x": 0,
-        "y": 6,
+        "y": 13,
         "w": 12,
         "h": 8
       },
@@ -487,13 +730,13 @@
       }
     },
     {
-      "id": 10,
+      "id": 12,
       "type": "timeseries",
       "title": "Encoders",
       "description": "The video encoder each transcode used. hevc_qsv is the iGPU; libx265 and other lib* encoders are software.",
       "gridPos": {
         "x": 12,
-        "y": 6,
+        "y": 13,
         "w": 12,
         "h": 8
       },
@@ -589,13 +832,13 @@
       }
     },
     {
-      "id": 11,
+      "id": 13,
       "type": "logs",
       "title": "Recent transcodes",
       "description": "Each job's start, ffmpeg command, exit code and outcome. Search one job with {job=\"tdarr/job-reports\"} | job_id=\"<id>\".",
       "gridPos": {
         "x": 0,
-        "y": 14,
+        "y": 21,
         "w": 24,
         "h": 12
       },
@@ -639,13 +882,13 @@
       }
     },
     {
-      "id": 12,
+      "id": 14,
       "type": "logs",
       "title": "Errors",
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 26,
+        "y": 33,
         "w": 24,
         "h": 8
       },
@@ -689,26 +932,26 @@
       }
     },
     {
-      "id": 13,
+      "id": 15,
       "type": "row",
       "title": "Library",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 34,
+        "y": 41,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 14,
+      "id": 16,
       "type": "timeseries",
       "title": "AV1 files left",
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 35,
+        "y": 42,
         "w": 8,
         "h": 8
       },
@@ -771,13 +1014,13 @@
       }
     },
     {
-      "id": 15,
+      "id": 17,
       "type": "timeseries",
       "title": "Queue and errors",
       "description": "",
       "gridPos": {
         "x": 8,
-        "y": 35,
+        "y": 42,
         "w": 8,
         "h": 8
       },
@@ -858,13 +1101,13 @@
       }
     },
     {
-      "id": 16,
+      "id": 18,
       "type": "timeseries",
       "title": "Space saved",
       "description": "Net space saved across the files currently in the libraries. AV1 to HEVC usually grows files, so this can fall while AV1 is converted.",
       "gridPos": {
         "x": 16,
-        "y": 35,
+        "y": 42,
         "w": 8,
         "h": 8
       },
@@ -927,13 +1170,13 @@
       }
     },
     {
-      "id": 17,
+      "id": 19,
       "type": "timeseries",
       "title": "Video codecs",
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 43,
+        "y": 50,
         "w": 24,
         "h": 7
       },
@@ -996,26 +1239,26 @@
       }
     },
     {
-      "id": 18,
+      "id": 20,
       "type": "row",
       "title": "Cost",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 50,
+        "y": 57,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 19,
+      "id": 21,
       "type": "timeseries",
       "title": "Tdarr CPU",
       "description": "A hardware transcode needs about a core, plus software decoding for AV1 sources.",
       "gridPos": {
         "x": 0,
-        "y": 51,
+        "y": 58,
         "w": 8,
         "h": 8
       },
@@ -1078,13 +1321,13 @@
       }
     },
     {
-      "id": 20,
+      "id": 22,
       "type": "timeseries",
       "title": "iGPU engines",
       "description": "On this iGPU (Gen9), HEVC encoding loads the render engine as well as video.",
       "gridPos": {
         "x": 8,
-        "y": 51,
+        "y": 58,
         "w": 8,
         "h": 8
       },
@@ -1148,13 +1391,13 @@
       }
     },
     {
-      "id": 21,
+      "id": 23,
       "type": "timeseries",
       "title": "CPU temperature",
       "description": "",
       "gridPos": {
         "x": 16,
-        "y": 51,
+        "y": 58,
         "w": 8,
         "h": 8
       },
