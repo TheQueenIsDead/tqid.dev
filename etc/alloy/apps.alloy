@@ -80,9 +80,11 @@ prometheus.relabel "apps" {
 			"quic_client_latest_rtt",
 			// iGPU (drm-exporter): engine busy, clocks, power. ~12 series.
 			"drm_(info|engine_utilization_ratio|frequency_hertz|power_watts|temperature_celsius)",
-			// Tdarr (tdarr-exporter): library and queue counts. Per-worker metrics are left out; they're
-			// labelled per file, so every job would add new series.
+			// Tdarr (tdarr-exporter): library and queue counts, and progress of the job each worker is on.
+			// Workers keep their IDs between jobs, so only worker_info (labelled with the file) changes
+			// series per job: a couple alive at a time.
 			"tdarr_(up|server_healthy|files|size_diff_bytes|library_(info|files|size_diff_bytes|transcodes|health_checks|video_codecs))",
+			"tdarr_node_worker_(info|idle|ratio|fps|eta_seconds|job_start_timestamp_seconds|original_file_size_bytes|est_file_size_bytes)",
 		], "|")
 	}
 
