@@ -181,6 +181,21 @@ services:
     networks:
       - backend
 
+  # Tdarr's library, queue and error counts as Prometheus metrics, from its API. Scraped by
+  # etc/alloy/apps.alloy, which keeps only the library-level ones (the per-worker metrics are
+  # labelled per file). https://github.com/homeylab/tdarr-exporter
+  tdarr-exporter:
+    image: "homeylab/tdarr-exporter:3.1.0"
+    container_name: "tdarr-exporter"
+    restart: "unless-stopped"
+    environment:
+      - "TDARR_URL=http://tdarr:8266"
+    labels:
+      - "alloy.metrics.scrape=true"
+      - "alloy.metrics.port=9090"
+    networks:
+      - backend
+
   jellyseerr:
     image: "ghcr.io/seerr-team/seerr:v3.4.1"
     container_name: "jellyseerr"
