@@ -78,6 +78,8 @@ prometheus.relabel "apps" {
 			// Cloudflared tunnel
 			"cloudflared_tunnel_(total_requests|request_errors|response_by_code|ha_connections|concurrent_requests_per_tunnel)",
 			"quic_client_latest_rtt",
+			// iGPU (drm-exporter): engine busy, clocks, power. ~12 series.
+			"drm_(info|engine_utilization_ratio|frequency_hertz|power_watts|temperature_celsius)",
 		], "|")
 	}
 

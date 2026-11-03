@@ -53,5 +53,28 @@ services:
       retries: 3
       start_period: 30s
 
+  # iGPU engine use, clocks and power, so Quick Sync (Tdarr, Jellyfin) shows up next to CPU use.
+  # Scraped by etc/alloy/apps.alloy over this project's default network; no ports published.
+  #   https://github.com/home-operations/drm-exporter#privileges
+  # CAP_SYS_RAWIO and /dev/cpu are left out: they only add the iGPU package temperature,
+  # which the CPU's own sensors already report.
+  drm-exporter:
+    container_name: drm-exporter
+    image: ghcr.io/home-operations/drm-exporter:0.3.6
+    environment:
+      # Refresh once per scrape, so each sample is the average over the last minute
+      # rather than a 5s snapshot.
+      DRM_EXPORTER_INTERVAL_SECONDS: "60"
+    devices:
+      - '/dev/dri:/dev/dri'
+    volumes:
+      - '/sys:/sys:ro'
+    cap_add:
+      - PERFMON
+    labels:
+      - 'alloy.metrics.scrape=true'
+      - 'alloy.metrics.port=8081'
+    restart: "unless-stopped"
+
 volumes:
   alloy-data:
