@@ -87,9 +87,12 @@ loki.process "tdarr_job_reports" {
 		drop_counter_reason = "tdarr_noise"
 	}
 
+	// Tdarr writes local time (TZ in docker/arr.yml) but suffixes it with Z, so parse the Z as a
+	// literal; read as UTC, every line is 13 hours in the future and Loki rejects it.
 	stage.timestamp {
-		source = "ts"
-		format = "RFC3339Nano"
+		source   = "ts"
+		format   = "2006-01-02T15:04:05.000Z"
+		location = "Pacific/Auckland"
 	}
 
 	stage.structured_metadata {
