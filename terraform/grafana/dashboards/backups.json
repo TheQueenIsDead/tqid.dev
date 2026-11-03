@@ -742,7 +742,7 @@
             "drawStyle": "line",
             "lineWidth": 1,
             "fillOpacity": 10,
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "axisSoftMin": 0,
             "stacking": {
@@ -825,7 +825,7 @@
             "drawStyle": "line",
             "lineWidth": 1,
             "fillOpacity": 20,
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "axisSoftMin": 0,
             "stacking": {
@@ -895,7 +895,7 @@
             "drawStyle": "line",
             "lineWidth": 1,
             "fillOpacity": 20,
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "axisSoftMin": 0,
             "stacking": {
@@ -965,7 +965,7 @@
             "drawStyle": "line",
             "lineWidth": 1,
             "fillOpacity": 10,
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "axisSoftMin": 0,
             "stacking": {
@@ -1043,7 +1043,7 @@
             "drawStyle": "line",
             "lineWidth": 1,
             "fillOpacity": 20,
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "axisSoftMin": 0,
             "stacking": {
@@ -1113,7 +1113,7 @@
             "drawStyle": "line",
             "lineWidth": 1,
             "fillOpacity": 10,
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "axisSoftMin": 0,
             "stacking": {
