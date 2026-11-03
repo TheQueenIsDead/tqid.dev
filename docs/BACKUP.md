@@ -198,5 +198,9 @@ alert group in `terraform/grafana/alerts.tf` raises:
 - **Backup stale** — a profile's metrics file has not been written in over 26 hours, i.e. the
   timer has stopped.
 
+After the `immich` backup and its prune, a `run-finally` hook also writes `repository.prom`
+with the size of the whole repository in B2 (`restic stats --mode raw-data`). It goes stale,
+and alerts, if the hook fails. All of it is graphed on the **Backups** dashboard in Grafana.
+
 Removing a profile leaves its `.prom` file behind, which will then alert as stale; delete the
 file on the NUC when you retire a profile.

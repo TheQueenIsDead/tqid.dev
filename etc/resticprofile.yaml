@@ -7,6 +7,7 @@
 #
 # Secrets are NOT in here. RESTIC_PASSWORD, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 # are written to /etc/resticprofile/env (0600, root) from GitHub secrets. See docs/BACKUP.md.
+{{ $repository := "s3:s3.us-west-004.backblazeb2.com/tqid-dev-backup" }}
 version: "1"
 
 global:
@@ -24,7 +25,7 @@ default:
   # Backblaze B2 through its S3 compatible API - restic recommends this over the native
   # b2: backend: https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html#backblaze-b2
   # The region has to match the bucket's, which is shown next to the bucket in the B2 UI.
-  repository: "s3:s3.us-west-004.backblazeb2.com/tqid-dev-backup"
+  repository: "{{ $repository }}"
   env-file: "/etc/resticprofile/env"
   initialize: true
   force-inactive-lock: true
@@ -108,6 +109,21 @@ apps:
 # Backup Settings), and that dump is what gets stored here.
 immich:
   inherit: "default"
+  # After the night's last backup and its prune, record the size of the whole repository: what B2
+  # stores, and bills, across every retained snapshot. At the profile level because a backup
+  # section's hooks run before retention, and run-finally so a failure here can't fail the backup.
+  # A missing update shows up as repository.prom going stale (the Backup stale alert).
+  run-finally:
+    - |
+      [ "$PROFILE_COMMAND" = "backup" ] || exit 0
+      stats="$(restic --repo "{{ $repository }}" stats --mode raw-data --json)" || exit 1
+      field() { printf '%s' "$stats" | sed -n "s/.*\"$1\":\([0-9]*\).*/\1/p"; }
+      dir=/var/lib/resticprofile/metrics
+      {
+        echo "resticprofile_repository_size_bytes $(field total_size)"
+        echo "resticprofile_repository_uncompressed_size_bytes $(field total_uncompressed_size)"
+        echo "resticprofile_repository_snapshots $(field snapshots_count)"
+      } > "$dir/repository.prom.tmp" && mv "$dir/repository.prom.tmp" "$dir/repository.prom"
   backup:
     tag:
       - "immich"

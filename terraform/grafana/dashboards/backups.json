@@ -504,7 +504,7 @@
     {
       "id": 8,
       "type": "row",
-      "title": "History",
+      "title": "Repository in B2",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -516,12 +516,280 @@
     },
     {
       "id": 9,
+      "type": "stat",
+      "title": "Stored in B2",
+      "description": "Everything in the repository across all retained snapshots, after deduplication and compression. This is what B2 bills for.",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 4,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "expr": "resticprofile_repository_size_bytes",
+          "instant": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [],
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Before compression",
+      "description": "The same data, deduplicated but uncompressed.",
+      "gridPos": {
+        "x": 4,
+        "y": 6,
+        "w": 4,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "expr": "resticprofile_repository_uncompressed_size_bytes",
+          "instant": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [],
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Snapshots",
+      "description": "Retained snapshots across all profiles: 7 daily, 4 weekly, 12 monthly and 3 yearly each, once there's that much history.",
+      "gridPos": {
+        "x": 8,
+        "y": 6,
+        "w": 4,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "expr": "resticprofile_repository_snapshots",
+          "instant": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Repository size",
+      "description": "Steps once a day. Growth is new data; drops are prunes expiring old snapshots.",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "expr": "max(resticprofile_repository_size_bytes)",
+          "legendFormat": "stored",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          }
+        },
+        {
+          "expr": "max(resticprofile_repository_uncompressed_size_bytes)",
+          "legendFormat": "before compression",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [],
+          "unit": "decbytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "lineInterpolation": "stepAfter"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "row",
+      "title": "History",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 14,
       "type": "timeseries",
       "title": "Uploaded per run",
       "description": "Compressed bytes each run added to B2; each step is a run. A jump means a lot changed, or something new landed in a backed-up path.",
       "gridPos": {
         "x": 0,
-        "y": 6,
+        "y": 15,
         "w": 12,
         "h": 8
       },
@@ -585,13 +853,13 @@
       }
     },
     {
-      "id": 10,
+      "id": 15,
       "type": "timeseries",
       "title": "Duration per run",
       "description": "",
       "gridPos": {
         "x": 12,
-        "y": 6,
+        "y": 15,
         "w": 12,
         "h": 8
       },
@@ -655,13 +923,13 @@
       }
     },
     {
-      "id": 11,
+      "id": 16,
       "type": "timeseries",
       "title": "Source size",
       "description": "Growth of what is being backed up. Retention keeps the B2 repository roughly proportional to this.",
       "gridPos": {
         "x": 0,
-        "y": 14,
+        "y": 23,
         "w": 12,
         "h": 8
       },
@@ -724,13 +992,13 @@
       }
     },
     {
-      "id": 12,
+      "id": 17,
       "type": "timeseries",
       "title": "Files new / changed per run",
       "description": "",
       "gridPos": {
         "x": 12,
-        "y": 14,
+        "y": 23,
         "w": 12,
         "h": 8
       },
@@ -803,13 +1071,13 @@
       }
     },
     {
-      "id": 13,
+      "id": 18,
       "type": "timeseries",
       "title": "Host upload rate",
       "description": "All outbound traffic from nuc. Backups show as the 02:00 (apps) and 03:00 (immich) bumps; the height is the effective upload speed to B2.",
       "gridPos": {
         "x": 0,
-        "y": 22,
+        "y": 31,
         "w": 24,
         "h": 7
       },

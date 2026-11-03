@@ -72,6 +72,7 @@ prometheus.relabel "host" {
 			"node_textfile_scrape_error",
 			"resticprofile_backup_(status|time_seconds|duration_seconds|added_bytes|added_bytes_packed|processed_bytes|files_new|files_changed)",
 			"resticprofile_check_success",
+			"resticprofile_repository_(size_bytes|uncompressed_size_bytes|snapshots)",
 			// Temperatures (hwmon): CPU package/cores, NVMe, board sensors
 			"node_hwmon_temp_celsius",
 			"node_hwmon_temp_crit_celsius",
