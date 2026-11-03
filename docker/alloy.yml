@@ -61,6 +61,9 @@ services:
   drm-exporter:
     container_name: drm-exporter
     image: ghcr.io/home-operations/drm-exporter:0.3.6
+    # The image runs as nonroot (65532), which can't open /dev/dri, and added capabilities only
+    # apply to root. Root with just PERFMON, as the project's Helm chart runs it.
+    user: "0"
     environment:
       # Refresh once per scrape, so each sample is the average over the last minute
       # rather than a 5s snapshot.
