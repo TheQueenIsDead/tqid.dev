@@ -49,5 +49,16 @@ loki.process "containers" {
 		drop_counter_reason = "too_old"
 	}
 
+	// Strip query strings from Traefik access logs before they leave the host; they can carry
+	// API keys and share tokens (e.g. Jellyfin's ?api_key=).
+	stage.match {
+		selector = "{container=\"traefik\"}"
+
+		stage.replace {
+			expression = "\"RequestPath\":\"[^\"?]*(\\?[^\"]*)\""
+			replace    = ""
+		}
+	}
+
 	forward_to = [loki.write.grafana_cloud.receiver]
 }

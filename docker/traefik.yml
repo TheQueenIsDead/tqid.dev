@@ -20,6 +20,13 @@ services:
       - "--entrypoints.web.transport.respondingTimeouts.idleTimeout=120s"
       - "--entrypoints.web.transport.respondingTimeouts.writeTimeout=120s"
       - "--metrics.prometheus"
+      # JSON access logs on stdout, shipped to Loki with the other container logs (etc/alloy/docker-logs.alloy).
+      # Tunnel requests arrive from cloudflared, so keep Cloudflare's headers for the real visitor IP and country.
+      - "--accesslog=true"
+      - "--accesslog.format=json"
+      - "--accesslog.fields.headers.names.User-Agent=keep"
+      - "--accesslog.fields.headers.names.CF-Connecting-IP=keep"
+      - "--accesslog.fields.headers.names.CF-IPCountry=keep"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     expose:
