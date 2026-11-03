@@ -518,7 +518,7 @@
       "id": 9,
       "type": "timeseries",
       "title": "Uploaded per run",
-      "description": "Compressed bytes each run added to B2. A jump means a lot changed, or something new landed in a backed-up path.",
+      "description": "Compressed bytes each run added to B2; each step is a run. A jump means a lot changed, or something new landed in a backed-up path.",
       "gridPos": {
         "x": 0,
         "y": 6,
@@ -531,9 +531,8 @@
       },
       "targets": [
         {
-          "expr": "max by (profile) (max_over_time(resticprofile_backup_added_bytes_packed[1d]))",
+          "expr": "max by (profile) (resticprofile_backup_added_bytes_packed)",
           "legendFormat": "{{profile}}",
-          "interval": "1d",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -555,16 +554,17 @@
           "mappings": [],
           "unit": "decbytes",
           "custom": {
-            "drawStyle": "bars",
+            "drawStyle": "line",
             "lineWidth": 1,
-            "fillOpacity": 80,
+            "fillOpacity": 20,
             "showPoints": "never",
             "spanNulls": false,
             "axisSoftMin": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
-            }
+            },
+            "lineInterpolation": "stepAfter"
           },
           "color": {
             "mode": "palette-classic"
@@ -601,9 +601,8 @@
       },
       "targets": [
         {
-          "expr": "max by (profile) (max_over_time(resticprofile_backup_duration_seconds[1d]))",
+          "expr": "max by (profile) (resticprofile_backup_duration_seconds)",
           "legendFormat": "{{profile}}",
-          "interval": "1d",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -625,16 +624,17 @@
           "mappings": [],
           "unit": "dtdurations",
           "custom": {
-            "drawStyle": "bars",
+            "drawStyle": "line",
             "lineWidth": 1,
-            "fillOpacity": 80,
+            "fillOpacity": 20,
             "showPoints": "never",
             "spanNulls": false,
             "axisSoftMin": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
-            }
+            },
+            "lineInterpolation": "stepAfter"
           },
           "color": {
             "mode": "palette-classic"
@@ -740,9 +740,8 @@
       },
       "targets": [
         {
-          "expr": "max by (profile) (max_over_time(resticprofile_backup_files_new[1d]))",
+          "expr": "max by (profile) (resticprofile_backup_files_new)",
           "legendFormat": "{{profile}} new",
-          "interval": "1d",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -750,9 +749,8 @@
           }
         },
         {
-          "expr": "max by (profile) (max_over_time(resticprofile_backup_files_changed[1d]))",
+          "expr": "max by (profile) (resticprofile_backup_files_changed)",
           "legendFormat": "{{profile}} changed",
-          "interval": "1d",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -774,16 +772,17 @@
           "mappings": [],
           "unit": "short",
           "custom": {
-            "drawStyle": "bars",
+            "drawStyle": "line",
             "lineWidth": 1,
-            "fillOpacity": 80,
+            "fillOpacity": 20,
             "showPoints": "never",
             "spanNulls": false,
             "axisSoftMin": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
-            }
+            },
+            "lineInterpolation": "stepAfter"
           },
           "color": {
             "mode": "palette-classic"
