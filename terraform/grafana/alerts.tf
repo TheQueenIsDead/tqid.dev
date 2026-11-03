@@ -112,6 +112,40 @@ locals {
       summary     = "Cloudflare tunnel has no connections"
       description = "cloudflared has {{ $values.A.Value }} connections to Cloudflare; public apps routed through the tunnel are unreachable."
     }
+
+    # The tunnel is up but can't hand requests to Traefik. Traefik's own 5xx alert can't see this when
+    # Traefik is the thing that's down. Normally well under 10% (client disconnects count as errors).
+    "Tunnel can't reach origin" = {
+      datasource  = "prometheus"
+      panel       = ["traffic", "Tunnel requests"]
+      expr        = <<-EOT
+        (sum(rate(cloudflared_tunnel_request_errors[10m])) / sum(rate(cloudflared_tunnel_total_requests[10m])))
+        and
+        sum(rate(cloudflared_tunnel_total_requests[10m])) > 0.01
+      EOT
+      threshold   = 0.5
+      comparison  = "gt"
+      for         = "5m"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "Cloudflare tunnel can't reach Traefik"
+      description = "{{ humanizePercentage $values.A.Value }} of requests through the tunnel failed over the last 10m. Check that Traefik is running and cloudflared can reach it on the edge network."
+    }
+
+    # From Traefik's access logs. One client being refused over and over is someone guessing passwords
+    # (or an app of yours with a stale token, which is worth fixing anyway).
+    "Repeated failed logins" = {
+      datasource  = "loki"
+      panel       = ["traffic", "Failed logins (401/403)"]
+      expr        = "sum by (client, RequestHost) (count_over_time({container=\"traefik\"} | json | DownstreamStatus=~\"401|403\" | label_format client=`{{ or .request_Cf_Connecting_Ip .ClientHost }}` [10m]))"
+      threshold   = 30
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.client }} keeps failing to log in to {{ $labels.RequestHost }}"
+      description = "{{ $labels.client }} was refused {{ $values.A.Value }} times by {{ $labels.RequestHost }} in the last 10m. If it isn't you, block it in Cloudflare (Security > WAF > Tools)."
+    }
   }
 
   # Alerts that telemetry is being lost, or is about to be, on the Grafana Cloud free tier.
@@ -510,6 +544,43 @@ locals {
       summary     = "Backup repository check hasn't run in over a week"
       description = "The last restic check result is {{ humanize $values.A.Value }} days old. Check `systemctl list-timers 'resticprofile-*'` on nuc."
     }
+
+    # Compressed bytes the last run added to B2. Runs are normally under 1GB; ransomware encrypting files
+    # changes everything at once (and doesn't compress), as does something big landing in a backed-up path.
+    # Stays firing until the next normal run.
+    "Backup unusually large" = {
+      datasource  = "prometheus"
+      panel       = ["backups", "Uploaded per run"]
+      expr        = "max by (profile) (resticprofile_backup_added_bytes_packed) / 1e9"
+      threshold   = 5
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.profile }} backup uploaded {{ humanize $values.A.Value }}GB"
+      description = "The last {{ $labels.profile }} backup added {{ humanize $values.A.Value }}GB to B2, far more than usual. Check what changed with `restic diff` between the last two snapshots; mass changes can mean ransomware."
+    }
+
+    # Retention removes about one snapshot per profile as it adds one, and prune frees little, so a big
+    # drop in either means backups were deleted. Written daily by the immich profile's run-finally hook.
+    "Backups disappeared" = {
+      datasource  = "prometheus"
+      panel       = ["backups", "Stored in B2"]
+      expr        = <<-EOT
+        1 - (
+          label_replace(max(resticprofile_repository_snapshots) / max(max_over_time(resticprofile_repository_snapshots[2d])), "measure", "snapshots", "", "")
+          or
+          label_replace(max(resticprofile_repository_size_bytes) / max(max_over_time(resticprofile_repository_size_bytes[2d])), "measure", "size", "", "")
+        )
+      EOT
+      threshold   = 0.2
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "The backup repository lost {{ humanizePercentage $values.A.Value }} of its {{ $labels.measure }}"
+      description = "The B2 repository's {{ $labels.measure }} dropped {{ humanizePercentage $values.A.Value }} in the last 2 days, which retention doesn't do. Check `restic snapshots` and the B2 bucket for deleted files."
+    }
   }
 }
 
@@ -595,7 +666,7 @@ resource "grafana_rule_group" "tqid" {
         contact_point = "Discord"
         # One notification per affected thing, so the Discord template's CommonAnnotations are populated.
         # Listed explicitly rather than "..." so Grafana's internal labels don't end up in the title.
-        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file", "chip", "sensor"]
+        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file", "chip", "sensor", "client", "RequestHost", "measure"]
 
         group_wait      = local.notification_timing.group_wait
         group_interval  = local.notification_timing.group_interval
