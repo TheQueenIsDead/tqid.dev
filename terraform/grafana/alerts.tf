@@ -167,6 +167,21 @@ locals {
       summary     = "Tdarr {{ $labels.kind }}s are failing"
       description = "{{ humanize $values.A.Value }} more files failed their {{ $labels.kind }} in the last hour. Tdarr lists them under the library's error tab; their job reports are in Loki under {job=\"tdarr/job-reports\"}."
     }
+
+    # From Tdarr's job reports: a transcode whose ffmpeg command uses a CPU encoder. Tdarr's encoder plugin
+    # falls back to software without saying so, which pegs every core and runs the NUC at 90C+.
+    "Software transcode" = {
+      datasource  = "loki"
+      panel       = ["transcoding", "Encoders"]
+      expr        = "sum by (encoder) (count_over_time({job=\"tdarr/job-reports\", type=\"transcode\"} |= \"tdarr-ffmpeg -y\" | regexp \"-c:0 (?P<encoder>[a-z0-9_]+)\" | encoder=~\"libx265|libx264|libsvtav1|libaom-av1\" [15m]))"
+      threshold   = 0
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "Tdarr is transcoding in software ({{ $labels.encoder }})"
+      description = "A Tdarr transcode started with {{ $labels.encoder }} instead of hevc_qsv, so it's running on the CPU. Check the flow's Set Video Encoder plugins (Hardware Encoding on, Hardware Type qsv) and that the job ran on a GPU worker."
+    }
   }
 
   # Alerts that telemetry is being lost, or is about to be, on the Grafana Cloud free tier.
@@ -687,7 +702,7 @@ resource "grafana_rule_group" "tqid" {
         contact_point = "Discord"
         # One notification per affected thing, so the Discord template's CommonAnnotations are populated.
         # Listed explicitly rather than "..." so Grafana's internal labels don't end up in the title.
-        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file", "chip", "sensor", "client", "RequestHost", "measure", "kind"]
+        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file", "chip", "sensor", "client", "RequestHost", "measure", "kind", "encoder"]
 
         group_wait      = local.notification_timing.group_wait
         group_interval  = local.notification_timing.group_interval
