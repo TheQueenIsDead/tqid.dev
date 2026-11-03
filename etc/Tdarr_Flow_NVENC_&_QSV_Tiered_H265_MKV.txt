@@ -33,7 +33,7 @@
       "inputsDB": {
         "hardwareType": "auto",
         "ffmpegPreset": "slow",
-        "hardwareEncoding": "false",
+        "hardwareEncoding": "true",
         "hardwareDecoding": "false",
         "forceEncoding": "false"
       }
