@@ -5,6 +5,52 @@
   "tags": "",
   "flowPlugins": [
     {
+      "name": "Check Video Codec (AV1)",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoCodec",
+      "version": "1.0.0",
+      "id": "2HJ75gpL5",
+      "position": {
+        "x": 1224,
+        "y": -96
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "codec": "av1"
+      }
+    },
+    {
+      "name": "Set Video Encoder (hevc, slow, 25)",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandSetVideoEncoder",
+      "version": "1.0.0",
+      "id": "koRfifocQ",
+      "position": {
+        "x": 996,
+        "y": 684
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "hardwareType": "auto",
+        "ffmpegPreset": "slow",
+        "hardwareEncoding": "false",
+        "hardwareDecoding": "false",
+        "forceEncoding": "false"
+      }
+    },
+    {
+      "name": "Fail Flow (Outside Acceptable Size)",
+      "sourceRepo": "Community",
+      "pluginName": "failFlow",
+      "version": "1.0.0",
+      "id": "mDMVe7u2t",
+      "position": {
+        "x": 1488,
+        "y": 1668
+      },
+      "fpEnabled": true
+    },
+    {
       "name": "Remove Data Streams",
       "sourceRepo": "Community",
       "pluginName": "ffmpegCommandRemoveDataStreams",
@@ -17,31 +63,14 @@
       "fpEnabled": true
     },
     {
-      "name": "Compare File Size Ratio Live (HEVC, 100%)",
-      "sourceRepo": "Community",
-      "pluginName": "compareFileSizeRatioLive",
-      "version": "1.0.0",
-      "id": "IqQjFFJxO",
-      "position": {
-        "x": 1321.2847730251149,
-        "y": -116.99996996804833
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "compareMethod": "estimatedFinalSize",
-        "thresholdPerc": "100",
-        "checkDelaySeconds": "500"
-      }
-    },
-    {
       "name": "Check Video Codec (HEVC)",
       "sourceRepo": "Community",
       "pluginName": "checkVideoCodec",
       "version": "1.0.0",
       "id": "ec0-JfFxt",
       "position": {
-        "x": 1345.0865598907121,
-        "y": -199.37719049187035
+        "x": 1164,
+        "y": -180
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -58,7 +87,7 @@
         "x": 1668.6068690014083,
         "y": 891.5388892720877
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "bitrate": "1000",
         "useInputBitrate": "true",
@@ -75,7 +104,7 @@
         "x": 1573.710243722665,
         "y": 953.4692603144648
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "bitrate": "25000"
       }
@@ -87,10 +116,10 @@
       "version": "1.0.0",
       "id": "pKK4dxnhy",
       "position": {
-        "x": 1479.1647819659913,
-        "y": 1016.7834187485703
+        "x": 1479.164781965991,
+        "y": 1016.7834187485704
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "bitrate": "15000"
       }
@@ -105,7 +134,7 @@
         "x": 1391.687053259717,
         "y": 1090.1095758789145
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "bitrate": "15000"
       }
@@ -120,7 +149,7 @@
         "x": 1281.402380529454,
         "y": 1019.3786344440946
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "bitrate": "10000"
       }
@@ -132,10 +161,10 @@
       "version": "1.0.0",
       "id": "GrGtoMVkg",
       "position": {
-        "x": 1160.3382472142234,
-        "y": 1089.9553747503319
+        "x": 1164,
+        "y": 1092
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "bitrate": "5000"
       }
@@ -147,10 +176,10 @@
       "version": "1.0.0",
       "id": "lxGVx3mWu",
       "position": {
-        "x": 1060.1782758833272,
-        "y": 1018.1673042157557
+        "x": 1056,
+        "y": 1020
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "bitrate": "3000"
       }
@@ -163,9 +192,9 @@
       "id": "0bWL09Am3",
       "position": {
         "x": 968.4510718697626,
-        "y": 950.0962549272837
+        "y": 950.0962549272836
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "bitrate": "1000"
       }
@@ -177,8 +206,8 @@
       "version": "1.0.0",
       "id": "XEPPTsdQ_",
       "position": {
-        "x": 1189.329922604706,
-        "y": 675.7443382097898
+        "x": 1188,
+        "y": 684
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -193,8 +222,8 @@
       "version": "1.0.0",
       "id": "xHN7Df4K1",
       "position": {
-        "x": 1345.4920596754391,
-        "y": -271.2278564528162
+        "x": 1250.7590705484329,
+        "y": -332.4809098887909
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -208,8 +237,8 @@
       "version": "1.0.0",
       "id": "yJbSCeKkc",
       "position": {
-        "x": 1259.3815402603543,
-        "y": 75.0431708663757
+        "x": 1168.54002135836,
+        "y": 78.64799304502627
       },
       "fpEnabled": true
     },
@@ -220,8 +249,8 @@
       "version": "1.0.0",
       "id": "NiPL78ugI",
       "position": {
-        "x": 1432.873505985502,
-        "y": 74.84035887017745
+        "x": 1348.520667005079,
+        "y": 79.88710992028822
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -315,8 +344,8 @@
       "version": "1.0.0",
       "id": "O6NPwKlGw",
       "position": {
-        "x": 1192.9158837358698,
-        "y": 598.8687846173825
+        "x": 1188,
+        "y": 612
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -331,8 +360,8 @@
       "version": "1.0.0",
       "id": "x-JaLk0uw",
       "position": {
-        "x": 1364.569663479129,
-        "y": 597.5067975736615
+        "x": 1368,
+        "y": 612
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -347,8 +376,8 @@
       "version": "1.0.0",
       "id": "YKZBWCsi6",
       "position": {
-        "x": 1281.2415857414558,
-        "y": 774.0962145411123
+        "x": 1272,
+        "y": 792
       },
       "fpEnabled": true
     },
@@ -359,8 +388,8 @@
       "version": "1.0.0",
       "id": "HJq2m_2B0",
       "position": {
-        "x": 1371.385842861594,
-        "y": 671.8914530584725
+        "x": 1368,
+        "y": 684
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -390,7 +419,7 @@
         "x": 867.5763057592455,
         "y": 891.2522571653735
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "bitrate": "1000"
       }
@@ -402,8 +431,8 @@
       "version": "1.0.0",
       "id": "7tY9qP25o",
       "position": {
-        "x": 1281.985693365879,
-        "y": 1364.5321957570538
+        "x": 1284,
+        "y": 1368
       },
       "fpEnabled": true
     },
@@ -414,8 +443,8 @@
       "version": "1.0.0",
       "id": "8vCesCmcG",
       "position": {
-        "x": 1277.2388462135993,
-        "y": 1722.2329945052236
+        "x": 1212,
+        "y": 1728
       },
       "fpEnabled": true
     },
@@ -426,8 +455,8 @@
       "version": "1.0.0",
       "id": "rwWYJOXAN",
       "position": {
-        "x": 1523.6975954115667,
-        "y": -117.26112496268115
+        "x": 1332,
+        "y": -12
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -443,8 +472,8 @@
       "version": "1.0.0",
       "id": "zTMiNz-xW",
       "position": {
-        "x": 1275.3301000151405,
-        "y": 1472.1304023492742
+        "x": 1281.5675766261922,
+        "y": 1457.5762902568204
       },
       "fpEnabled": true
     },
@@ -455,20 +484,20 @@
       "version": "1.0.0",
       "id": "Jc2w3wK-A",
       "position": {
-        "x": 1272.7471167042227,
-        "y": 1806.3443789315
+        "x": 1212,
+        "y": 1848
       },
       "fpEnabled": true
     },
     {
-      "name": "Fail Flow",
+      "name": "Fail Flow (Unexpected Duration Change)",
       "sourceRepo": "Community",
       "pluginName": "failFlow",
       "version": "1.0.0",
       "id": "ocVJtHbRL",
       "position": {
-        "x": 1626.9746025276536,
-        "y": 1602.8044929807588
+        "x": 1507.4229674824967,
+        "y": 1463.5008486672714
       },
       "fpEnabled": true
     },
@@ -485,14 +514,14 @@
       "fpEnabled": true
     },
     {
-      "name": "Debug the video bitrate",
+      "name": "Debug the video bitrate, which can fail",
       "sourceRepo": "Community",
       "pluginName": "comment",
       "version": "1.0.0",
       "id": "xBKaf4MtT",
       "position": {
-        "x": 1498.8446601229964,
-        "y": 254.75723510462456
+        "x": 1460.7522512401315,
+        "y": 268.6090201529391
       },
       "fpEnabled": true
     },
@@ -515,8 +544,8 @@
       "version": "1.0.0",
       "id": "HMPizoDrE",
       "position": {
-        "x": 1726.8358038016806,
-        "y": -75.92583899688458
+        "x": 1055.2703300197409,
+        "y": -2.8217829417818097
       },
       "fpEnabled": true
     },
@@ -539,13 +568,67 @@
       "version": "2.0.0",
       "id": "dOWPx6Ql1",
       "position": {
-        "x": 1277.1045121256855,
-        "y": 1614.36769074515
+        "x": 1248,
+        "y": 1584
       },
-      "fpEnabled": true,
+      "fpEnabled": false,
       "inputsDB": {
         "greaterThan": "10"
       }
+    },
+    {
+      "name": "Check File Extension (MKV)",
+      "sourceRepo": "Community",
+      "pluginName": "checkFileExtension",
+      "version": "1.0.0",
+      "id": "mL40tNkah",
+      "position": {
+        "x": 1248,
+        "y": -252
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "extensions": "mkv"
+      }
+    },
+    {
+      "name": "If the file is encoded with HEVC and is in an MKV, dont worry about transcoding",
+      "sourceRepo": "Community",
+      "pluginName": "comment",
+      "version": "1.0.0",
+      "id": "3OaRE--uQ",
+      "position": {
+        "x": 1054.7712236843029,
+        "y": -101.50242686643024
+      },
+      "fpEnabled": true
+    },
+    {
+      "name": "Check Video Codec (AV1)",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoCodec",
+      "version": "1.0.0",
+      "id": "b2P2zNcAq",
+      "position": {
+        "x": 996,
+        "y": 612
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "codec": "av1"
+      }
+    },
+    {
+      "name": "Intel QSV 10th gen does not support AV1 hardware decoding (11th gen onwards), so disable it",
+      "sourceRepo": "Community",
+      "pluginName": "comment",
+      "version": "1.0.0",
+      "id": "k69d7nYXi",
+      "position": {
+        "x": 732,
+        "y": 624
+      },
+      "fpEnabled": true
     }
   ],
   "flowEdges": [
@@ -585,13 +668,6 @@
       "id": "XQbbxizmb"
     },
     {
-      "source": "r2zuF6aV-",
-      "sourceHandle": "1",
-      "target": "O6NPwKlGw",
-      "targetHandle": null,
-      "id": "yV30xy3Cp"
-    },
-    {
       "source": "O6NPwKlGw",
       "sourceHandle": "2",
       "target": "x-JaLk0uw",
@@ -611,13 +687,6 @@
       "target": "XEPPTsdQ_",
       "targetHandle": null,
       "id": "6LFuOtimc"
-    },
-    {
-      "source": "XEPPTsdQ_",
-      "sourceHandle": "1",
-      "target": "YKZBWCsi6",
-      "targetHandle": null,
-      "id": "3yMScDF8e"
     },
     {
       "source": "YKZBWCsi6",
@@ -781,32 +850,11 @@
       "id": "W-hUacDDD"
     },
     {
-      "source": "IqQjFFJxO",
-      "sourceHandle": "1",
-      "target": "yJbSCeKkc",
-      "targetHandle": null,
-      "id": "vwlX1cGyo"
-    },
-    {
       "source": "rwWYJOXAN",
       "sourceHandle": "1",
       "target": "yJbSCeKkc",
       "targetHandle": null,
       "id": "ovZ4-68vg"
-    },
-    {
-      "source": "ec0-JfFxt",
-      "sourceHandle": "1",
-      "target": "IqQjFFJxO",
-      "targetHandle": null,
-      "id": "e3BSRFAxB"
-    },
-    {
-      "source": "ec0-JfFxt",
-      "sourceHandle": "2",
-      "target": "rwWYJOXAN",
-      "targetHandle": null,
-      "id": "YF6jLhb25"
     },
     {
       "source": "Gf45xR3Ny",
@@ -837,13 +885,6 @@
       "id": "-6KLcJtCm"
     },
     {
-      "source": "HJq2m_2B0",
-      "sourceHandle": "1",
-      "target": "YKZBWCsi6",
-      "targetHandle": null,
-      "id": "bvlTFpFeA"
-    },
-    {
       "source": "NPbLChdAp",
       "sourceHandle": "1",
       "target": "kEkGD4vWH",
@@ -856,20 +897,6 @@
       "target": "r2zuF6aV-",
       "targetHandle": null,
       "id": "HTEPUj7zi"
-    },
-    {
-      "source": "IqQjFFJxO",
-      "sourceHandle": "err1",
-      "target": "HMPizoDrE",
-      "targetHandle": null,
-      "id": "yq7byaGKZ"
-    },
-    {
-      "source": "rwWYJOXAN",
-      "sourceHandle": "err1",
-      "target": "HMPizoDrE",
-      "targetHandle": null,
-      "id": "jN7WnT4G_"
     },
     {
       "source": "Ne1g0oG9Z",
@@ -886,20 +913,6 @@
       "id": "a3vsiFVOj"
     },
     {
-      "source": "xHN7Df4K1",
-      "sourceHandle": "1",
-      "target": "ec0-JfFxt",
-      "targetHandle": null,
-      "id": "LfKsxZY2m"
-    },
-    {
-      "source": "zTMiNz-xW",
-      "sourceHandle": "1",
-      "target": "dOWPx6Ql1",
-      "targetHandle": null,
-      "id": "LvUxd44Q-"
-    },
-    {
       "source": "dOWPx6Ql1",
       "sourceHandle": "1",
       "target": "8vCesCmcG",
@@ -907,18 +920,130 @@
       "id": "uyR98WkTC"
     },
     {
+      "source": "XEPPTsdQ_",
+      "sourceHandle": "1",
+      "target": "YKZBWCsi6",
+      "targetHandle": null,
+      "id": "jwtrqZq4i"
+    },
+    {
+      "source": "HJq2m_2B0",
+      "sourceHandle": "1",
+      "target": "YKZBWCsi6",
+      "targetHandle": null,
+      "id": "CJTMUirB7"
+    },
+    {
       "source": "dOWPx6Ql1",
       "sourceHandle": "2",
-      "target": "ocVJtHbRL",
+      "target": "mDMVe7u2t",
       "targetHandle": null,
-      "id": "fj5DkZyJ7"
+      "id": "nBXgqxAhq"
     },
     {
       "source": "dOWPx6Ql1",
       "sourceHandle": "3",
-      "target": "ocVJtHbRL",
+      "target": "mDMVe7u2t",
       "targetHandle": null,
-      "id": "MJLvcf1Xb"
+      "id": "J-IZeFUxL"
+    },
+    {
+      "source": "xHN7Df4K1",
+      "sourceHandle": "1",
+      "target": "mL40tNkah",
+      "targetHandle": null,
+      "id": "-p7w0uDGe"
+    },
+    {
+      "source": "mL40tNkah",
+      "sourceHandle": "1",
+      "target": "ec0-JfFxt",
+      "targetHandle": null,
+      "id": "PhkQ7PADy"
+    },
+    {
+      "source": "mL40tNkah",
+      "sourceHandle": "2",
+      "target": "rwWYJOXAN",
+      "targetHandle": null,
+      "id": "sni0S8ssx"
+    },
+    {
+      "source": "ec0-JfFxt",
+      "sourceHandle": "1",
+      "target": "3OaRE--uQ",
+      "targetHandle": null,
+      "id": "QMF-AFZoU"
+    },
+    {
+      "source": "3OaRE--uQ",
+      "sourceHandle": "1",
+      "target": "HMPizoDrE",
+      "targetHandle": null,
+      "id": "nMOdG7TYM"
+    },
+    {
+      "source": "r2zuF6aV-",
+      "sourceHandle": "1",
+      "target": "b2P2zNcAq",
+      "targetHandle": null,
+      "id": "JVC8RM4VU"
+    },
+    {
+      "source": "b2P2zNcAq",
+      "sourceHandle": "2",
+      "target": "O6NPwKlGw",
+      "targetHandle": null,
+      "id": "BBb92k5Ht"
+    },
+    {
+      "source": "b2P2zNcAq",
+      "sourceHandle": "1",
+      "target": "k69d7nYXi",
+      "targetHandle": null,
+      "id": "m1RWCcNIb"
+    },
+    {
+      "source": "k69d7nYXi",
+      "sourceHandle": "1",
+      "target": "koRfifocQ",
+      "targetHandle": null,
+      "id": "WiiEjX-NA"
+    },
+    {
+      "source": "koRfifocQ",
+      "sourceHandle": "1",
+      "target": "YKZBWCsi6",
+      "targetHandle": null,
+      "id": "aC_7a36I0"
+    },
+    {
+      "source": "zTMiNz-xW",
+      "sourceHandle": "1",
+      "target": "dOWPx6Ql1",
+      "targetHandle": null,
+      "id": "wC6GPWf31"
+    },
+    {
+      "source": "ec0-JfFxt",
+      "sourceHandle": "2",
+      "target": "2HJ75gpL5",
+      "targetHandle": null,
+      "id": "GXmBfFP84"
+    },
+    {
+      "source": "2HJ75gpL5",
+      "sourceHandle": "2",
+      "target": "rwWYJOXAN",
+      "targetHandle": null,
+      "id": "bimDkqoV9"
+    },
+    {
+      "source": "2HJ75gpL5",
+      "sourceHandle": "1",
+      "target": "NiPL78ugI",
+      "targetHandle": null,
+      "id": "PeogadxlY"
     }
   ]
 }
