@@ -1,0 +1,115 @@
+// Tdarr job reports -> Loki, cut down to the lines worth reading.
+//
+// Tdarr writes a report per job (about 360 a day, 80MB a day) to DB2/JobReports. Most of each is
+// the same JSON dumps (library settings, ffprobe and mediainfo output) and ffmpeg progress.
+// Only the steps, plugin decisions, ffmpeg commands and errors are kept, a few MB a day.
+// Query with {job="tdarr/job-reports"}; job_id and worker are structured metadata.
+
+local.file_match "tdarr_job_reports" {
+	path_targets = [{
+		// <file id>/<file id>()<version>()<transcode|healthcheck>()<job id>()<unix ms>.txt
+		__path__ = "/host/root/mnt/unitek/config/tdarr/server/Tdarr/DB2/JobReports/*/*.txt",
+	}]
+	// Only reports being written now. Without this, the first start reads the whole backlog (4GB).
+	ignore_older_than = "1h"
+	sync_period       = "30s"
+}
+
+discovery.relabel "tdarr_job_reports" {
+	targets = local.file_match.tdarr_job_reports.targets
+
+	rule {
+		source_labels = ["__path__"]
+		regex         = ".*\\(\\)(transcode|healthcheck)\\(\\)[^/]*\\.txt"
+		target_label  = "type"
+	}
+
+	rule {
+		target_label = "job"
+		replacement  = "tdarr/job-reports"
+	}
+
+	rule {
+		target_label = "instance"
+		replacement  = constants.hostname
+	}
+}
+
+loki.source.file "tdarr_job_reports" {
+	targets    = discovery.relabel.tdarr_job_reports.output
+	forward_to = [loki.process.tdarr_job_reports.receiver]
+}
+
+loki.process "tdarr_job_reports" {
+	// Lines of pretty-printed JSON carry only the timestamp, then indentation or a brace.
+	stage.drop {
+		expression          = "^\\S+ (\\s|[{}\\]]|$)"
+		drop_counter_reason = "tdarr_json_fragment"
+	}
+
+	// <timestamp> <job id>:[Node[<node>]:][Worker[<worker>]:]<message>
+	stage.regex {
+		expression = "^(?P<ts>\\S+) (?P<job_id>[A-Za-z0-9_-]+):(?:Node\\[[^\\]]*\\]:)?(?:Worker\\[(?P<worker>[^\\]]*)\\]:)?(?P<msg>.*)$"
+	}
+
+	// After each plugin, Tdarr logs the file's whole state just to say which output it took.
+	stage.regex {
+		source     = "msg"
+		expression = "\"outputNumber\":(?P<output>\\d+)"
+	}
+
+	stage.template {
+		source   = "msg"
+		template = "{{ if .output }}Plugin took output {{ .output }}{{ else if .msg }}{{ .msg }}{{ end }}"
+	}
+
+	stage.output {
+		source = "msg"
+	}
+
+	// The remaining JSON dumps (library settings, ffprobe data) are tens of KB each. ffmpeg
+	// commands with many streams are the longest lines worth keeping, at 1-2KB.
+	stage.drop {
+		longer_than         = "4KB"
+		drop_counter_reason = "tdarr_json_dump"
+	}
+
+	// The encoder probes the hardware check runs on every job.
+	stage.drop {
+		expression          = "color=c=black|^Checking for encoder|^Encoder \\S+ is (en|dis)abled"
+		drop_counter_reason = "tdarr_encoder_probe"
+	}
+
+	// Everything else that isn't a step, decision, command, outcome or error.
+	stage.match {
+		selector            = "{job=\"tdarr/job-reports\"} !~ \"(?i)(step [a-z][0-9]|running [a-z]+ plugin|plugin took output|tdarr-ffmpeg|workertype|received file|setting variable|node has hardware|error|fail|success|cancel|replac|not required)\""
+		action              = "drop"
+		drop_counter_reason = "tdarr_noise"
+	}
+
+	stage.timestamp {
+		source = "ts"
+		format = "RFC3339Nano"
+	}
+
+	stage.structured_metadata {
+		values = {
+			job_id = "",
+			worker = "",
+		}
+	}
+
+	// One stream per report type rather than per file; the file is identified by job_id.
+	stage.label_drop {
+		values = ["filename"]
+	}
+
+	// Backstop against a job that logs far more than expected; normal jobs log a few lines a second at most.
+	stage.limit {
+		rate  = 20
+		burst = 500
+		drop  = true
+	}
+
+	forward_to = [loki.write.grafana_cloud.receiver]
+}
