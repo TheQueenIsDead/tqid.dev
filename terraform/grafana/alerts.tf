@@ -8,9 +8,11 @@ locals {
 
   # Golden-signal error alerts for applications, built from the telemetry shipped by etc/alloy.
   # `expr` must return the value compared against `threshold`; `no_data` applies when it returns nothing.
+  # `panel` (optional) is the [dashboard, panel title] in dashboards/ that the alert shows on.
   application_alerts = {
     "HTTP 5xx error rate" = {
       datasource = "prometheus"
+      panel      = ["traffic", "Errors by service"]
       # Ratio of 5xx responses per Traefik service, ignoring services with negligible traffic.
       expr        = <<-EOT
         (
@@ -32,6 +34,7 @@ locals {
 
     "Container restarting" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Container restarts"]
       expr        = "changes(container_start_time_seconds[15m])"
       threshold   = 2
       comparison  = "gt"
@@ -44,6 +47,7 @@ locals {
 
     "Error log spike" = {
       datasource  = "loki"
+      panel       = ["overview", "Error logs"]
       expr        = "sum by (container) (count_over_time({job=\"integrations/docker\"} | detected_level=~\"error|fatal|critical\" [5m]))"
       threshold   = 10
       comparison  = "gt"
@@ -58,6 +62,7 @@ locals {
     # Requiring it every hour for 3h keeps one-off bursts out.
     "Persistent errors" = {
       datasource  = "loki"
+      panel       = ["overview", "Error logs"]
       expr        = "sum by (container) (count_over_time({job=\"integrations/docker\"} | detected_level=~\"error|fatal|critical\" [1h]))"
       threshold   = 10
       comparison  = "gt"
@@ -70,6 +75,7 @@ locals {
 
     "Metrics target down" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Targets down"]
       expr        = "up == 0"
       threshold   = -1
       comparison  = "gt"
@@ -83,6 +89,7 @@ locals {
     # From the Synthetic Monitoring checks in synthetics.tf, so this sees what visitors see.
     "Site down" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Sites"]
       expr        = "avg by (job, instance) (avg_over_time(probe_success[15m]))"
       threshold   = 0.5
       comparison  = "lt"
@@ -95,6 +102,7 @@ locals {
 
     "Cloudflare tunnel down" = {
       datasource  = "prometheus"
+      panel       = ["traffic", "Tunnel connections"]
       expr        = "sum(cloudflared_tunnel_ha_connections)"
       threshold   = 1
       comparison  = "lt"
@@ -111,6 +119,7 @@ locals {
     # Dead man's switch for log collection; Host down only notices when metrics stop.
     "No container logs" = {
       datasource  = "loki"
+      panel       = ["free-tier", "Log ingestion"]
       expr        = "sum(count_over_time({job=\"integrations/docker\"}[15m]))"
       threshold   = 1
       comparison  = "lt"
@@ -123,6 +132,7 @@ locals {
 
     "Logs being discarded" = {
       datasource  = "usage"
+      panel       = ["free-tier", "Discarded"]
       expr        = "sum by (reason) (grafanacloud_logs_instance_discarded_bytes_per_second)"
       threshold   = 0
       comparison  = "gt"
@@ -135,6 +145,7 @@ locals {
 
     "Metrics being discarded" = {
       datasource  = "usage"
+      panel       = ["free-tier", "Discarded"]
       expr        = "sum by (reason) (grafanacloud_instance_samples_discarded_per_second)"
       threshold   = 0
       comparison  = "gt"
@@ -147,6 +158,7 @@ locals {
 
     "Logs quota forecast" = {
       datasource = "usage"
+      panel      = ["free-tier", "Logs by month end"]
       # Fraction of the monthly quota used by month end: GB used so far, plus the last 6h's rate over the
       # seconds left in the (UTC) month.
       expr        = <<-EOT
@@ -170,6 +182,7 @@ locals {
     # Backstop on what has actually been used, whatever the current rate. Normal months use well under 1%.
     "Logs quota half used" = {
       datasource  = "usage"
+      panel       = ["free-tier", "Logs"]
       expr        = "sum(grafanacloud_org_logs_usage) / sum(grafanacloud_org_logs_included_usage)"
       threshold   = 0.5
       comparison  = "gt"
@@ -184,6 +197,7 @@ locals {
     # before the 24h forecast would. Usage metrics have no per-source labels, so this reads Loki directly.
     "Noisy log source" = {
       datasource  = "loki"
+      panel       = ["free-tier", "Logs by source (per month)"]
       expr        = "sum by (job, container) (bytes_rate({job=~\".+\"}[1h])) * 86400 * 30 / 1e9"
       threshold   = 10
       comparison  = "gt"
@@ -198,6 +212,7 @@ locals {
     # point per minute per series), so faster scrapes use it up just like more series.
     "Metrics quota near limit" = {
       datasource  = "usage"
+      panel       = ["free-tier", "Metrics series"]
       expr        = "sum(grafanacloud_org_metrics_billable_series) / sum(grafanacloud_org_metrics_included_series)"
       threshold   = 0.8
       comparison  = "gt"
@@ -211,6 +226,7 @@ locals {
     # Per job, so a cardinality explosion (e.g. a broken cAdvisor or Traefik allowlist) is named.
     "Noisy metrics source" = {
       datasource  = "prometheus"
+      panel       = ["free-tier", "Series by job"]
       expr        = "count by (job) ({__name__=~\".+\"})"
       threshold   = 2500
       comparison  = "gt"
@@ -232,6 +248,7 @@ locals {
     # Dead man's switch: no data means the host or Alloy is down, so treat it as alerting.
     "Host down" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Uptime"]
       expr        = "sum(up{job=\"integrations/node_exporter\"})"
       threshold   = 1
       comparison  = "lt"
@@ -246,6 +263,7 @@ locals {
     # alert treats as OK. Only fires while node metrics are arriving, so it doesn't echo Host down.
     "Unitek drive missing" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Disk used"]
       expr        = "absent(node_filesystem_size_bytes{mountpoint=\"/mnt/unitek\"}) and on() (sum(up{job=\"integrations/node_exporter\"}) > 0)"
       threshold   = 0
       comparison  = "gt"
@@ -260,6 +278,7 @@ locals {
     # changes() to the boot time, which can shift by a second when NTP adjusts the clock.
     "Host rebooted" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Uptime"]
       expr        = "(time() - node_boot_time_seconds) / 60"
       threshold   = 60
       comparison  = "lt"
@@ -272,6 +291,7 @@ locals {
 
     "Disk filling up" = {
       datasource = "prometheus"
+      panel      = ["overview", "Disk used"]
       # Free space in 24h, extrapolated from the last 6h.
       expr        = "predict_linear(node_filesystem_avail_bytes[6h], 24 * 3600)"
       threshold   = 0
@@ -285,6 +305,7 @@ locals {
 
     "Disk almost full" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Disk used"]
       expr        = "node_filesystem_avail_bytes / node_filesystem_size_bytes"
       threshold   = 0.1
       comparison  = "lt"
@@ -298,6 +319,7 @@ locals {
     # The kernel remounts a filesystem read-only when the disk under it fails.
     "Filesystem read-only" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Disk used"]
       expr        = "node_filesystem_readonly{fstype=~\"ext4|xfs|btrfs\"}"
       threshold   = 0
       comparison  = "gt"
@@ -324,6 +346,7 @@ locals {
     # NUC CPUs throttle at about 100C; sustained heat usually means a failing fan or poor airflow.
     "Running hot" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Hottest sensor"]
       expr        = "max by (instance, chip, sensor) (node_hwmon_temp_celsius)"
       threshold   = 85
       comparison  = "gt"
@@ -338,6 +361,7 @@ locals {
     # process without Memory pressure (15m below 10% available) ever firing.
     "Out of memory kill" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Memory by container"]
       expr        = "increase(node_vmstat_oom_kill[10m])"
       threshold   = 0
       comparison  = "gt"
@@ -350,6 +374,7 @@ locals {
 
     "Memory pressure" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Memory"]
       expr        = "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes"
       threshold   = 0.1
       comparison  = "lt"
@@ -362,6 +387,7 @@ locals {
 
     "Disk I/O saturated" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Pressure"]
       expr        = "rate(node_disk_io_time_seconds_total[5m])"
       threshold   = 0.9
       comparison  = "gt"
@@ -377,6 +403,7 @@ locals {
     # plain saturation.
     "CPU pressure" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Pressure"]
       expr        = "rate(node_pressure_cpu_waiting_seconds_total[5m])"
       threshold   = 0.5
       comparison  = "gt"
@@ -389,6 +416,7 @@ locals {
 
     "Disk wait" = {
       datasource  = "prometheus"
+      panel       = ["overview", "Pressure"]
       expr        = "avg by (instance) (rate(node_cpu_seconds_total{mode=\"iowait\"}[5m]))"
       threshold   = 0.3
       comparison  = "gt"
@@ -403,6 +431,7 @@ locals {
     # is likely stuck or not doing what it should.
     "Runaway container" = {
       datasource  = "prometheus"
+      panel       = ["overview", "CPU by container"]
       expr        = "sum by (instance, container) (rate(container_cpu_usage_seconds_total{container!~\"tdarr|jellyfin|immich-machine-learning\"}[5m]))"
       threshold   = 3
       comparison  = "gt"
@@ -415,6 +444,7 @@ locals {
 
     "CPU saturated" = {
       datasource  = "prometheus"
+      panel       = ["overview", "CPU"]
       expr        = "1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))"
       threshold   = 0.9
       comparison  = "gt"
@@ -428,6 +458,7 @@ locals {
     # From the metrics resticprofile writes after each backup (etc/resticprofile.yaml).
     "Backup failed" = {
       datasource  = "prometheus"
+      panel       = ["backups", "Result"]
       expr        = "resticprofile_backup_status"
       threshold   = 1
       comparison  = "lt"
@@ -442,6 +473,7 @@ locals {
     # The weekly check has its own file and threshold below.
     "Backup stale" = {
       datasource  = "prometheus"
+      panel       = ["backups", "Since last backup"]
       expr        = "(time() - node_textfile_mtime_seconds{file!~\".*maintenance.prom\"}) / 3600"
       threshold   = 26
       comparison  = "gt"
@@ -455,6 +487,7 @@ locals {
     # Written by the maintenance profile's hooks after the weekly `restic check`.
     "Backup check failed" = {
       datasource  = "prometheus"
+      panel       = ["backups", "Repository check"]
       expr        = "resticprofile_check_success"
       threshold   = 1
       comparison  = "lt"
@@ -467,6 +500,7 @@ locals {
 
     "Backup check stale" = {
       datasource  = "prometheus"
+      panel       = ["backups", "Repository check"]
       expr        = "(time() - node_textfile_mtime_seconds{file=~\".*maintenance.prom\"}) / 86400"
       threshold   = 8
       comparison  = "gt"
@@ -500,10 +534,17 @@ resource "grafana_rule_group" "tqid" {
         severity = rule.value.severity
       }
 
-      annotations = {
-        summary     = rule.value.summary
-        description = rule.value.description
-      }
+      # Alerts with a `panel` link to it, which shows their state on the panel (the heart icon).
+      annotations = merge(
+        {
+          summary     = rule.value.summary
+          description = rule.value.description
+        },
+        try(rule.value.panel, null) == null ? {} : {
+          __dashboardUid__ = grafana_dashboard.tqid["${rule.value.panel[0]}.json"].uid
+          __panelId__      = tostring(local.dashboard_panel_ids[rule.value.panel[0]][rule.value.panel[1]][0])
+        },
+      )
 
       data {
         ref_id         = "A"
