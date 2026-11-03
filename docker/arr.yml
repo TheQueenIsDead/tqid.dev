@@ -190,6 +190,12 @@ services:
     restart: "unless-stopped"
     environment:
       - "TDARR_URL=http://tdarr:8266"
+    # It only makes HTTP requests as its nonroot user, so it needs no capabilities or writable filesystem.
+    cap_drop:
+      - "ALL"
+    read_only: true
+    security_opt:
+      - "no-new-privileges:true"
     labels:
       - "alloy.metrics.scrape=true"
       - "alloy.metrics.port=9090"
