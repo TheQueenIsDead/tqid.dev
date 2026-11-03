@@ -96,7 +96,7 @@
           "range": false
         },
         {
-          "expr": "max by (worker_id) (time() - tdarr_node_worker_job_start_timestamp_seconds) and on (worker_id) (max by (worker_id) (tdarr_node_worker_idle) == 0)",
+          "expr": "max by (worker_id) (time() - tdarr_node_worker_job_start_timestamp_seconds / 1000) and on (worker_id) (max by (worker_id) (tdarr_node_worker_idle) == 0)",
           "instant": true,
           "format": "table",
           "refId": "D",
