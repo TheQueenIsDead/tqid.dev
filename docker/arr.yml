@@ -227,25 +227,6 @@ services:
     networks:
       - backend
 
-  homarr:
-    container_name: homarr
-    image: ghcr.io/homarr-labs/homarr:v1.74.0
-    restart: unless-stopped
-    expose:
-     - "7575"
-    environment:
-      - "SECRET_ENCRYPTION_KEY=${HOMARR_ENCRYPTION_KEY}"
-    volumes:
-      - "${CONFIG_FOLDER}/homarr:/appdata"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.homarr.entrypoints=web"
-      - "traefik.http.routers.homarr.rule=Host(`home.tqid.dev`)"
-      - "traefik.http.services.homarr.loadbalancer.server.port=7575"
-    networks:
-      - backend
-
 networks:
   backend:
     external: true
