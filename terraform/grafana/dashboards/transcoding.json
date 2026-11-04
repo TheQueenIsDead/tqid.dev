@@ -481,7 +481,7 @@
       },
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"tdarr/job-reports\"} |~ \"(?i)error|fail\" !~ \"File move error|Failed to move file, trying copy\" [$__range])) or vector(0)",
+          "expr": "sum(count_over_time({job=\"tdarr/job-reports\"} |~ `(?i)\\b(error|fail)` !~ \"File move error|Failed to move file, trying copy\" [$__range])) or vector(0)",
           "refId": "A",
           "datasource": {
             "type": "loki",
@@ -848,7 +848,7 @@
       },
       "targets": [
         {
-          "expr": "{job=\"tdarr/job-reports\", type=\"transcode\"} |~ \"Received file|tdarr-ffmpeg -y|exited with code|replacing original file|(?i)error|fail\" !~ \"File move error|Failed to move file, trying copy\" | line_format `{{ .job_id }}  {{ __line__ }}`",
+          "expr": "{job=\"tdarr/job-reports\", type=\"transcode\"} |~ \"Received file|tdarr-ffmpeg -y|exited with code|replacing original file\" or `(?i)\\b(error|fail)` !~ \"File move error|Failed to move file, trying copy\" | line_format `{{ .job_id }}  {{ __line__ }}`",
           "refId": "A",
           "datasource": {
             "type": "loki",
@@ -898,7 +898,7 @@
       },
       "targets": [
         {
-          "expr": "{job=\"tdarr/job-reports\"} |~ \"(?i)error|fail\" !~ \"File move error|Failed to move file, trying copy\" | line_format `{{ .type }} {{ .job_id }}  {{ __line__ }}`",
+          "expr": "{job=\"tdarr/job-reports\"} |~ `(?i)\\b(error|fail)` !~ \"File move error|Failed to move file, trying copy\" | line_format `{{ .type }} {{ .job_id }}  {{ __line__ }}`",
           "refId": "A",
           "datasource": {
             "type": "loki",
