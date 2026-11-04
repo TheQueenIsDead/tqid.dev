@@ -36,7 +36,7 @@
     {
       "id": 1,
       "type": "row",
-      "title": "Overview",
+      "title": "Now",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -48,12 +48,184 @@
     },
     {
       "id": 2,
+      "type": "table",
+      "title": "Now playing",
+      "description": "What each Jellyfin session is playing right now, from the Webhook plugin's progress events. Empty when nothing is playing.",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 24,
+        "h": 6
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "grafanacloud-logs"
+      },
+      "targets": [
+        {
+          "expr": "max by (user, client, device, title) (max_over_time({job=\"jellyfin/webhook\", event=\"PlaybackProgress\"} | json user, client, device, series, season, episode, name, position_ticks | label_format title=`{{ if .series }}{{ .series }} S{{ .season }}E{{ .episode }} \u00b7 {{ end }}{{ .name }}` | unwrap position_ticks | __error__=\"\" [1m])) / max by (user, client, device, title) (max_over_time({job=\"jellyfin/webhook\", event=\"PlaybackProgress\"} | json user, client, device, series, season, episode, name, runtime_ticks | label_format title=`{{ if .series }}{{ .series }} S{{ .season }}E{{ .episode }} \u00b7 {{ end }}{{ .name }}` | unwrap runtime_ticks | __error__=\"\" [1m]))",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "grafanacloud-logs"
+          },
+          "queryType": "instant"
+        },
+        {
+          "expr": "max by (user, client, device, title) (last_over_time({job=\"jellyfin/webhook\", event=\"PlaybackProgress\"} | json user, client, device, series, season, episode, name, paused | label_format title=`{{ if .series }}{{ .series }} S{{ .season }}E{{ .episode }} \u00b7 {{ end }}{{ .name }}` | label_format p=`{{ if eq .paused \"True\" }}1{{ else }}0{{ end }}` | drop paused | unwrap p | __error__=\"\" [1m]))",
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "grafanacloud-logs"
+          },
+          "queryType": "instant"
+        },
+        {
+          "expr": "(max by (user, client, device, title) (max_over_time({job=\"jellyfin/webhook\", event=\"PlaybackProgress\"} | json user, client, device, series, season, episode, name, runtime_ticks | label_format title=`{{ if .series }}{{ .series }} S{{ .season }}E{{ .episode }} \u00b7 {{ end }}{{ .name }}` | unwrap runtime_ticks | __error__=\"\" [1m])) - max by (user, client, device, title) (max_over_time({job=\"jellyfin/webhook\", event=\"PlaybackProgress\"} | json user, client, device, series, season, episode, name, position_ticks | label_format title=`{{ if .series }}{{ .series }} S{{ .season }}E{{ .episode }} \u00b7 {{ end }}{{ .name }}` | unwrap position_ticks | __error__=\"\" [1m]))) / 1e7",
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "grafanacloud-logs"
+          },
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Progress"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Playing",
+                        "color": "green"
+                      },
+                      "1": {
+                        "text": "Paused",
+                        "color": "orange"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Left"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "user": "User",
+              "title": "Watching",
+              "client": "App",
+              "device": "Device",
+              "Value #A": "Progress",
+              "Value #B": "State",
+              "Value #C": "Left"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "row",
+      "title": "Overview",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 4,
       "type": "stat",
       "title": "Plays",
       "description": "Playbacks started in the time range.",
       "gridPos": {
         "x": 0,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -104,13 +276,13 @@
       }
     },
     {
-      "id": 3,
+      "id": 5,
       "type": "stat",
       "title": "Finished",
       "description": "Playbacks watched to the end.",
       "gridPos": {
         "x": 4,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -161,13 +333,13 @@
       }
     },
     {
-      "id": 4,
+      "id": 6,
       "type": "stat",
       "title": "Watchers",
       "description": "Users who started something.",
       "gridPos": {
         "x": 8,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -218,13 +390,13 @@
       }
     },
     {
-      "id": 5,
+      "id": 7,
       "type": "stat",
       "title": "Items added",
       "description": "",
       "gridPos": {
         "x": 12,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -275,13 +447,13 @@
       }
     },
     {
-      "id": 6,
+      "id": 8,
       "type": "stat",
       "title": "Logins",
       "description": "",
       "gridPos": {
         "x": 16,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -332,13 +504,13 @@
       }
     },
     {
-      "id": 7,
+      "id": 9,
       "type": "stat",
       "title": "Failed logins",
       "description": "Wrong passwords. Traffic > Failed logins has the source IPs; the Repeated failed logins alert fires on bursts.",
       "gridPos": {
         "x": 20,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -393,26 +565,26 @@
       }
     },
     {
-      "id": 8,
+      "id": 10,
       "type": "row",
       "title": "Watching",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 5,
+        "y": 12,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 9,
+      "id": 11,
       "type": "logs",
       "title": "Recently watched",
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 6,
+        "y": 13,
         "w": 12,
         "h": 12
       },
@@ -456,13 +628,13 @@
       }
     },
     {
-      "id": 10,
+      "id": 12,
       "type": "bargauge",
       "title": "Most watched",
       "description": "Plays per series (or film) in the time range.",
       "gridPos": {
         "x": 12,
-        "y": 6,
+        "y": 13,
         "w": 12,
         "h": 12
       },
@@ -518,13 +690,13 @@
       }
     },
     {
-      "id": 11,
+      "id": 13,
       "type": "timeseries",
       "title": "Plays",
       "description": "Playbacks started per hour, by user.",
       "gridPos": {
         "x": 0,
-        "y": 18,
+        "y": 25,
         "w": 24,
         "h": 7
       },
@@ -589,26 +761,26 @@
       }
     },
     {
-      "id": 12,
+      "id": 14,
       "type": "row",
       "title": "Activity",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 25,
+        "y": 32,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 13,
+      "id": 15,
       "type": "logs",
       "title": "Logins",
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 26,
+        "y": 33,
         "w": 12,
         "h": 10
       },
@@ -652,13 +824,13 @@
       }
     },
     {
-      "id": 14,
+      "id": 16,
       "type": "logs",
       "title": "Recently added",
       "description": "",
       "gridPos": {
         "x": 12,
-        "y": 26,
+        "y": 33,
         "w": 12,
         "h": 10
       },

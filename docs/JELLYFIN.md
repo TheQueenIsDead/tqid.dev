@@ -17,18 +17,20 @@ Plugins > Catalog**, restart Jellyfin, then under **Dashboard > Plugins > Webhoo
 | Setting | Value |
 | --- | --- |
 | Webhook Url | `http://host.docker.internal:3500/loki/api/v1/raw` |
-| Notification Type | Authentication Failure, Authentication Success, Item Added, Playback Start, Playback Stop |
+| Notification Type | Authentication Failure, Authentication Success, Item Added, Playback Progress, Playback Start, Playback Stop |
 | Item Type | Movies, Episodes |
 | Send All Properties | Off |
 | Trim leading and trailing whitespace | On |
 | Skip empty message body | On |
 
-Leave Playback Progress off: it fires every few seconds while something plays.
+Playback Progress fires about every 10 seconds per stream (paused ones included) and feeds the
+dashboard's **Now playing** table. That's about 150 KB of logs per hour of watching, nothing
+next to the free tier's 50 GB a month.
 
 Template. It must stay on **one line**, as the endpoint stores each line as a separate entry:
 
 ```handlebars
-{"event":"{{NotificationType}}","user":"{{NotificationUsername}}","username":"{{Username}}","type":"{{ItemType}}","name":"{{Name}}","series":"{{SeriesName}}","season":"{{SeasonNumber00}}","episode":"{{EpisodeNumber00}}","year":"{{Year}}","client":"{{ClientName}}","device":"{{DeviceName}}","ip":"{{RemoteEndPoint}}","completed":"{{PlayedToCompletion}}","position":"{{PlaybackPosition}}","runtime":"{{RunTime}}"}
+{"event":"{{NotificationType}}","user":"{{NotificationUsername}}","username":"{{Username}}","type":"{{ItemType}}","name":"{{Name}}","series":"{{SeriesName}}","season":"{{SeasonNumber00}}","episode":"{{EpisodeNumber00}}","year":"{{Year}}","client":"{{ClientName}}","device":"{{DeviceName}}","ip":"{{RemoteEndPoint}}","completed":"{{PlayedToCompletion}}","position":"{{PlaybackPosition}}","runtime":"{{RunTime}}","position_ticks":"{{PlaybackPositionTicks}}","runtime_ticks":"{{RunTimeTicks}}","paused":"{{IsPaused}}"}
 ```
 
 Fields an event doesn't have come out empty. Failed logins fill `username` rather than `user`.
