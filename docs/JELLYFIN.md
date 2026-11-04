@@ -23,9 +23,9 @@ Plugins > Catalog**, restart Jellyfin, then under **Dashboard > Plugins > Webhoo
 | Trim leading and trailing whitespace | On |
 | Skip empty message body | On |
 
-Playback Progress fires about every 10 seconds per stream (paused ones included) and feeds the
-dashboard's **Now playing** table. That's about 150 KB of logs per hour of watching, nothing
-next to the free tier's 50 GB a month.
+Playback Progress fires every few seconds per stream (paused ones included), and more often
+while seeking. It feeds the dashboard's **Now playing** table. Measured at about 300 KB of logs
+per hour of watching, nothing next to the free tier's 50 GB a month.
 
 Template. It must stay on **one line**, as the endpoint stores each line as a separate entry:
 
