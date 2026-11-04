@@ -115,6 +115,9 @@ services:
       - "PGID=1000"
       - "TZ=Pacific/Auckland"
       - "JELLYFIN_PublishedServerUrl=https://jellyfin.tqid.dev" #optional
+    # The Webhook plugin posts events to Alloy, which listens on the host (etc/alloy/jellyfin.alloy)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     devices:
       - "/dev/dri:/dev/dri"
     volumes:
