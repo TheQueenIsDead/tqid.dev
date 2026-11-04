@@ -165,8 +165,6 @@ services:
       - "cronPluginUpdate="
       - "NVIDIA_DRIVER_CAPABILITIES=all"
       - "NVIDIA_VISIBLE_DEVICES=all"
-    ports:
-      - "8266:8266"
     volumes:
       - "${CONFIG_FOLDER}/tdarr/server:/app/server"
       - "${CONFIG_FOLDER}/tdarr/configs:/app/configs"
