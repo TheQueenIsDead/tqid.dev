@@ -1,0 +1,54 @@
+// Jellyfin events -> Loki, from Jellyfin's Webhook plugin.
+//
+// Jellyfin's own logs don't say what was played or by whom, so the Webhook plugin posts each
+// playback start/stop, login and new item here as one line of JSON. docs/JELLYFIN.md has the
+// plugin's settings. A handful of events a day.
+// Query with {job="jellyfin/webhook"} | json; event is a label.
+//   https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.api/
+//   https://github.com/jellyfin/jellyfin-plugin-webhook
+
+loki.source.api "jellyfin" {
+	// Alloy runs on the host network, so listening on all interfaces would open this to the LAN.
+	// This is the default Docker bridge's gateway, which containers reach as host.docker.internal
+	// (extra_hosts in docker/arr.yml). The plugin posts to /loki/api/v1/raw.
+	http {
+		listen_address = "172.17.0.1"
+		listen_port    = 3500
+	}
+
+	// Unused, but it otherwise listens on all interfaces on a random port.
+	grpc {
+		listen_address = "127.0.0.1"
+	}
+
+	labels = {
+		job      = "jellyfin/webhook",
+		instance = constants.hostname,
+	}
+	forward_to = [loki.process.jellyfin.receiver]
+}
+
+loki.process "jellyfin" {
+	// PlaybackStart, PlaybackStop, AuthenticationSuccess, AuthenticationFailure, ItemAdded.
+	// A regex rather than stage.json, so a line that isn't valid JSON (a title with a stray
+	// backslash) still arrives with its event.
+	stage.regex {
+		expression = "\"event\":\"(?P<event>[A-Za-z]+)\""
+	}
+
+	stage.labels {
+		values = {
+			event = "",
+		}
+	}
+
+	// Backstop: any container can post here. A library scan adding a whole
+	// series is the biggest legitimate burst.
+	stage.limit {
+		rate  = 10
+		burst = 200
+		drop  = true
+	}
+
+	forward_to = [loki.write.grafana_cloud.receiver]
+}
