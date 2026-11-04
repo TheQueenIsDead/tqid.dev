@@ -30,10 +30,27 @@
       "matchPackageNames": ["ghcr.io/thequeenisdead/**"],
       "minimumReleaseAge": null,
     },
+    // Merging to main deploys, and .github/workflows/notify.yml reports each deploy to Discord.
+    // minimumReleaseAge above still holds every release back a week first.
+    // https://docs.renovatebot.com/key-concepts/automerge/
     {
       "matchManagers": ["docker-compose"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": false // TODO: Enable when confident
+      "automerge": true,
+      // Most compose files have no PR checks, and Renovate won't automerge without passing
+      // checks unless told to ignore them.
+      // https://docs.renovatebot.com/configuration-options/#ignoretests
+      "ignoreTests": true,
+    },
+    // Alloy does have a check (Alloy Validate), so wait for it
+    {
+      "matchFileNames": ["docker/alloy.yml"],
+      "ignoreTests": false,
+    },
+    // The server and machine learning images must run the same version, so update them in one PR
+    {
+      "matchPackageNames": ["ghcr.io/immich-app/immich-*"],
+      "groupName": "immich",
     },
     // Ignore versions 14 and 20, as these are remnants of whe the tag was attributed to the Ubuntu version
     // https://github.com/linuxserver/docker-qbittorrent/issues/448#issuecomment-4979556016
