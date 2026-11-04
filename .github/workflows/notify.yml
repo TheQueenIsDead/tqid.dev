@@ -1,0 +1,57 @@
+name: "Deploy Notify"
+
+# Posts each deploy's result to Discord, so automerged Renovate updates don't deploy unseen.
+# The webhook is a repository secret (DISCORD_DEPLOY_WEBHOOK), kept out of the repo.
+#   https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#workflow_run
+#   https://discord.com/developers/docs/resources/webhook#execute-webhook
+
+on:
+  workflow_run:
+    # The deploy workflows, by name. Add new ones here.
+    workflows:
+      - "Actual"
+      - "Alloy"
+      - "Cloudflare"
+      - "Files"
+      - "Immich"
+      - "Librespeed"
+      - "Media"
+      - "Memos"
+      - "Portainer"
+      - "Recipes"
+      - "Restic"
+      - "TQID"
+      - "Traefik"
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  discord:
+    # Actual also syncs hourly on a schedule; only its failures are worth a message.
+    if: github.event.workflow_run.event != 'schedule' || github.event.workflow_run.conclusion == 'failure'
+    # GitHub-hosted: this only calls the webhook, and needn't touch the NUC.
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          WEBHOOK: ${{ secrets.DISCORD_DEPLOY_WEBHOOK }}
+          NAME: ${{ github.event.workflow_run.name }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          TITLE: ${{ github.event.workflow_run.display_title }}
+          ACTOR: ${{ github.event.workflow_run.actor.login }}
+          URL: ${{ github.event.workflow_run.html_url }}
+        # Values go through env and jq, never straight into the script, as commit titles are free text.
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "::error::DISCORD_DEPLOY_WEBHOOK isn't set"
+            exit 1
+          fi
+          case "$CONCLUSION" in
+            success) status="deployed";  color=3066993 ;;
+            failure) status="failed";    color=15158332 ;;
+            *)       status="$CONCLUSION"; color=9807270 ;;
+          esac
+          jq -n --arg title "$NAME $status" --arg url "$URL" --arg desc "$TITLE"$'\n'"by $ACTOR" --argjson color "$color" \
+            '{embeds: [{title: $title, url: $url, description: $desc, color: $color}]}' |
+            curl -fsS -H "Content-Type: application/json" -d @- "$WEBHOOK"
