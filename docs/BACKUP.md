@@ -31,7 +31,7 @@ Deliberately **not** backed up:
 - **Media** — `/mnt/unitek/{movies,tv,sport,downloads,media}`. Large, and re-acquirable.
 - **The file store** — `/mnt/unitek/files`, mostly raw photography. To be culled before it is
   worth keeping offsite.
-- **Finance apps** — Actual and budge re-sync from Akahu.
+- **Finance apps** — budge re-syncs from Akahu.
 - **Caches, artwork and transcodes** — jellyfin cache, metadata and transcodes, *arr
   `MediaCover`, tdarr cache, immich `thumbs/` and `encoded-video/`, logs. All regenerated.
 - **Everything else on the host** — Portainer, Librespeed, Filebrowser config,

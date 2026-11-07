@@ -9,7 +9,6 @@ on:
   workflow_run:
     # The deploy workflows, by name. Add new ones here.
     workflows:
-      - "Actual"
       - "Alloy"
       - "Cloudflare"
       - "Files"
@@ -29,8 +28,6 @@ permissions: {}
 
 jobs:
   discord:
-    # Actual also syncs hourly on a schedule; only its failures are worth a message.
-    if: github.event.workflow_run.event != 'schedule' || github.event.workflow_run.conclusion == 'failure'
     # GitHub-hosted: this only calls the webhook, and needn't touch the NUC.
     runs-on: ubuntu-latest
     steps:
