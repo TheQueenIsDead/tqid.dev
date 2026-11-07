@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   memos:
-    image: "neosmemo/memos:0.31.0"
+    image: "neosmemo/memos:26.10.0"
     container_name: "memos"
     networks:
       - "backend"
