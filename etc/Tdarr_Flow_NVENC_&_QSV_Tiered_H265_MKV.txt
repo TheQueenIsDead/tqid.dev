@@ -283,7 +283,10 @@
         "x": 1260,
         "y": 528
       },
-      "fpEnabled": true
+      "fpEnabled": true,
+      "inputsDB": {
+        "forceConform": "true"
+      }
     },
     {
       "name": "Check Flow Variable (TQID_HW_ENC==nvenc)",
