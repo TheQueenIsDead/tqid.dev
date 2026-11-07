@@ -22,7 +22,6 @@ variable "subdomains" {
     public = optional(bool, false)
   }))
   default = [
-    { name = "actual" },
     { name = "budge" },
     { name = "chat", public = true },
     { name = "cleanuparr" },
