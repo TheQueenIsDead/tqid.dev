@@ -23,7 +23,7 @@ app's **Settings > General**.
 | Arrs | Radarr | `http://radarr:7878` and its API key |
 | Arrs | Sportarr | `http://sportarr:1867` and its API key, API version v4 |
 | Malware Blocker | Enabled | On, every 5 minutes |
-| Malware Blocker | Delete if any file is blocked | On: a release with an executable in it isn't worth keeping |
+| Malware Blocker | Delete if any file is blocked | Off: the blocklist covers `.jpg` and `.txt` too, so this removed real releases with a poster or a tracker's ad file. Off, those files are just skipped, and a download is only removed when nothing in it is wanted |
 | Malware Blocker | Sonarr and Radarr blocklist | `https://cleanuparr.pages.dev/static/blacklist`, type Blacklist |
 | Malware Blocker | Process downloads with no content ID | Off |
 | Queue Cleaner | Failed imports | Remove after 3 strikes, so downloads Sonarr can't import don't sit in the queue |
