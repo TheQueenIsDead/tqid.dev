@@ -21,6 +21,7 @@ app's **Settings > General**.
 | Download Clients | qBittorrent | `http://qbittorrent:8080`, the web UI username and password |
 | Arrs | Sonarr | `http://sonarr:8989` and its API key |
 | Arrs | Radarr | `http://radarr:7878` and its API key |
+| Arrs | Sportarr | `http://sportarr:1867` and its API key, API version v4 |
 | Malware Blocker | Enabled | On, every 5 minutes |
 | Malware Blocker | Delete if any file is blocked | On: a release with an executable in it isn't worth keeping |
 | Malware Blocker | Sonarr and Radarr blocklist | `https://cleanuparr.pages.dev/static/blacklist`, type Blacklist |
@@ -31,8 +32,10 @@ The official blocklist covers executables, disc images, archives and sample file
 reloaded every 5 minutes. If a legitimate release ever arrives as a `.rar`, switch to
 `https://cleanuparr.pages.dev/static/blacklist_permissive`.
 
-Sportarr isn't supported. Its downloads aren't linked to an app Cleanuparr knows, so with
-**Process downloads with no content ID** off they are left alone.
+**Seeker** runs the replacement search for anything Cleanuparr removes, so turn its **Search**
+toggle on or a removed fake just leaves a gap. Leave **Proactive search** (missing items and
+upgrades) off: the indexers already rate-limit Sonarr and Radarr, and the *arrs search for
+missing items themselves.
 
 ## Checking it
 
