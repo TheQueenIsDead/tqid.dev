@@ -82,6 +82,7 @@ apps:
       - "/mnt/unitek/config/prowlarr"
       - "/mnt/unitek/config/sportarr"
       - "/mnt/unitek/config/qbittorrent"
+      - "/mnt/unitek/config/cleanuparr"
       - "/mnt/unitek/config/jellyfin"
       - "/mnt/unitek/config/jellyseer"
       # Tdarr: its own nightly database export rather than the live DB2 folder, which is

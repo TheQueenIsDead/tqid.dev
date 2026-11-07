@@ -14,7 +14,7 @@ Only data and config that would be slow or impossible to rebuild by hand.
 
 | Profile | Sources | Schedule |
 | --- | --- | --- |
-| `apps` | Memos and Mealie volumes; radarr, sonarr, prowlarr, sportarr, qbittorrent, jellyfin, jellyseer and tdarr config under `/mnt/unitek/config` | Daily, 02:00 |
+| `apps` | Memos and Mealie volumes; radarr, sonarr, prowlarr, sportarr, qbittorrent, cleanuparr, jellyfin, jellyseer and tdarr config under `/mnt/unitek/config` | Daily, 02:00 |
 | `immich` | `library/`, `upload/`, `profile/` and `backups/` under `/mnt/unitek/immich/library` | Daily, 03:00 |
 | `maintenance` | — (`restic check` with `--read-data-subset 5%`) | Sundays, 05:00 |
 

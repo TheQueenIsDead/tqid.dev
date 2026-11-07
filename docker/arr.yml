@@ -106,6 +106,34 @@ services:
     networks:
       - backend
 
+  # Keeps fake releases (.exe, .iso, archives...) out of qBittorrent and gets Sonarr/Radarr to
+  # blocklist them and search again. Configured in its UI, not here: docs/CLEANUPARR.md.
+  #   https://cleanuparr.github.io/docs/installation/detailed
+  cleanuparr:
+    image: "ghcr.io/cleanuparr/cleanuparr:2.10.12"
+    container_name: "cleanuparr"
+    restart: "unless-stopped"
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Pacific/Auckland"
+    volumes:
+      - "${CONFIG_FOLDER}/cleanuparr:/config"
+    expose:
+      - "11011"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11011/health"]
+      start_period: 30s
+      timeout: 10s
+      interval: 30s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cleanuparr.entrypoints=web"
+      - "traefik.http.routers.cleanuparr.rule=Host(`cleanuparr.tqid.dev`)"
+    networks:
+      - backend
+
   jellyfin:
     image: "lscr.io/linuxserver/jellyfin:10.11.11"
     container_name: "jellyfin"
