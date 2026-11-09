@@ -5,14 +5,102 @@
   "tags": "",
   "flowPlugins": [
     {
-      "name": "Set Video Encoder (hevc, slow)",
+      "name": "Set Video Encoder (hevc, slow, 25, auto)",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandSetVideoEncoder",
+      "version": "1.0.0",
+      "id": "VNCm142qg",
+      "position": {
+        "x": 1380,
+        "y": 996
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "hardwareType": "auto",
+        "ffmpegPreset": "slow",
+        "hardwareEncoding": "true",
+        "hardwareDecoding": "true",
+        "forceEncoding": "false",
+        "ffmpegQualityEnabled": "true"
+      }
+    },
+    {
+      "name": "Node worker checks",
+      "sourceRepo": "Community",
+      "pluginName": "comment",
+      "version": "1.0.0",
+      "id": "72xd4g9Jy",
+      "position": {
+        "x": 1320,
+        "y": -348
+      },
+      "fpEnabled": true
+    },
+    {
+      "name": "No change required if HVEC & MKV",
+      "sourceRepo": "Community",
+      "pluginName": "comment",
+      "version": "1.0.0",
+      "id": "IaIVKlmq4",
+      "position": {
+        "x": 1128,
+        "y": -504
+      },
+      "fpEnabled": true
+    },
+    {
+      "name": "Compare File Size Ratio Live (Other, 110%)",
+      "sourceRepo": "Community",
+      "pluginName": "compareFileSizeRatioLive",
+      "version": "1.0.0",
+      "id": "pjxKYc46a",
+      "position": {
+        "x": 1092,
+        "y": 1284
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "compareMethod": "estimatedFinalSize",
+        "thresholdPerc": "110",
+        "checkDelaySeconds": "500"
+      }
+    },
+    {
+      "name": "Run MKVPropEdit",
+      "sourceRepo": "Community",
+      "pluginName": "runMkvPropEdit",
+      "version": "1.0.0",
+      "id": "9BdEySjLN",
+      "position": {
+        "x": 1260,
+        "y": 108
+      },
+      "fpEnabled": true
+    },
+    {
+      "name": "Check File Extension (mkv)",
+      "sourceRepo": "Community",
+      "pluginName": "checkFileExtension",
+      "version": "1.0.0",
+      "id": "2ltMEGR1s",
+      "position": {
+        "x": 1356,
+        "y": -12
+      },
+      "fpEnabled": true,
+      "inputsDB": {
+        "extensions": "mkv"
+      }
+    },
+    {
+      "name": "Set Video Encoder (hevc, slow, auto)",
       "sourceRepo": "Community",
       "pluginName": "ffmpegCommandSetVideoEncoder",
       "version": "1.0.0",
       "id": "Y2U9xt7X_",
       "position": {
-        "x": 1416,
-        "y": 720
+        "x": 1200,
+        "y": 996
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -31,8 +119,8 @@
       "version": "1.0.0",
       "id": "87RrXGsRx",
       "position": {
-        "x": 1368,
-        "y": 612
+        "x": 1236,
+        "y": 720
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -40,14 +128,14 @@
       }
     },
     {
-      "name": "Set Video Encoder (hevc, slow)",
+      "name": "Set Video Encoder (hevc, slow, auto)",
       "sourceRepo": "Community",
       "pluginName": "ffmpegCommandSetVideoEncoder",
       "version": "1.0.0",
       "id": "e_C9RsOf0",
       "position": {
-        "x": 1200,
-        "y": 708
+        "x": 996,
+        "y": 996
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -66,8 +154,8 @@
       "version": "1.0.0",
       "id": "KG1yfeFSv",
       "position": {
-        "x": 1176,
-        "y": 612
+        "x": 1020,
+        "y": 720
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -75,29 +163,14 @@
       }
     },
     {
-      "name": "Check Video Codec (AV1)",
-      "sourceRepo": "Community",
-      "pluginName": "checkVideoCodec",
-      "version": "1.0.0",
-      "id": "2HJ75gpL5",
-      "position": {
-        "x": 1152,
-        "y": -228
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "codec": "av1"
-      }
-    },
-    {
-      "name": "Set Video Encoder (hevc, slow, 25)",
+      "name": "Set Video Encoder (hevc, slow, 25, auto)",
       "sourceRepo": "Community",
       "pluginName": "ffmpegCommandSetVideoEncoder",
       "version": "1.0.0",
       "id": "koRfifocQ",
       "position": {
-        "x": 996,
-        "y": 816
+        "x": 792,
+        "y": 996
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -107,18 +180,6 @@
         "hardwareDecoding": "false",
         "forceEncoding": "false"
       }
-    },
-    {
-      "name": "Fail Flow (Outside Acceptable Size)",
-      "sourceRepo": "Community",
-      "pluginName": "failFlow",
-      "version": "1.0.0",
-      "id": "mDMVe7u2t",
-      "position": {
-        "x": 1488,
-        "y": 1668
-      },
-      "fpEnabled": true
     },
     {
       "name": "Remove Data Streams",
@@ -139,28 +200,12 @@
       "version": "1.0.0",
       "id": "ec0-JfFxt",
       "position": {
-        "x": 1116,
-        "y": -336
+        "x": 1104,
+        "y": -348
       },
       "fpEnabled": true,
       "inputsDB": {
         "codec": "hevc"
-      }
-    },
-    {
-      "name": "Set Video Encoder (hevc, slow, 25, nvenc)",
-      "sourceRepo": "Community",
-      "pluginName": "ffmpegCommandSetVideoEncoder",
-      "version": "1.0.0",
-      "id": "XEPPTsdQ_",
-      "position": {
-        "x": 1716,
-        "y": 840
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "hardwareType": "nvenc",
-        "ffmpegPreset": "slow"
       }
     },
     {
@@ -170,8 +215,8 @@
       "version": "1.0.0",
       "id": "xHN7Df4K1",
       "position": {
-        "x": 1212,
-        "y": -504
+        "x": 1224,
+        "y": -576
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -185,8 +230,8 @@
       "version": "1.0.0",
       "id": "yJbSCeKkc",
       "position": {
-        "x": 1168.54002135836,
-        "y": 78.64799304502627
+        "x": 1320,
+        "y": -264
       },
       "fpEnabled": true
     },
@@ -197,44 +242,12 @@
       "version": "1.0.0",
       "id": "NiPL78ugI",
       "position": {
-        "x": 1348.520667005079,
-        "y": 79.88710992028822
+        "x": 1524,
+        "y": -264
       },
       "fpEnabled": true,
       "inputsDB": {
         "hardwareEncoder": "hevc_qsv"
-      }
-    },
-    {
-      "name": "Set Flow Variable (TQID_HW_ENC=nvenc)",
-      "sourceRepo": "Community",
-      "pluginName": "setFlowVariable",
-      "version": "1.0.0",
-      "id": "Gf45xR3Ny",
-      "position": {
-        "x": 1170.9578391495406,
-        "y": 182.1636582672486
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "variable": "TQID_HW_ENC",
-        "value": "nvenc"
-      }
-    },
-    {
-      "name": "Set Flow Variable (TQID_HW_ENC=qsv)",
-      "sourceRepo": "Community",
-      "pluginName": "setFlowVariable",
-      "version": "1.0.0",
-      "id": "b5nZiNBc-",
-      "position": {
-        "x": 1343.931701034363,
-        "y": 182.8343331640384
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "variable": "TQID_HW_ENC",
-        "value": "qsv"
       }
     },
     {
@@ -244,8 +257,8 @@
       "version": "1.0.0",
       "id": "wJZS4i2Jn",
       "position": {
-        "x": 1261.6458151964964,
-        "y": 359.7217490821978
+        "x": 1260,
+        "y": 312
       },
       "fpEnabled": true
     },
@@ -256,8 +269,8 @@
       "version": "1.0.0",
       "id": "YXerMMjQR",
       "position": {
-        "x": 1612.8971640970422,
-        "y": 77.40811015061485
+        "x": 1740,
+        "y": -264
       },
       "fpEnabled": true
     },
@@ -269,7 +282,7 @@
       "id": "NPbLChdAp",
       "position": {
         "x": 1260,
-        "y": 408
+        "y": 396
       },
       "fpEnabled": true
     },
@@ -281,72 +294,12 @@
       "id": "r2zuF6aV-",
       "position": {
         "x": 1260,
-        "y": 528
+        "y": 576
       },
       "fpEnabled": true,
       "inputsDB": {
         "forceConform": "true"
       }
-    },
-    {
-      "name": "Check Flow Variable (TQID_HW_ENC==nvenc)",
-      "sourceRepo": "Community",
-      "pluginName": "checkFlowVariable",
-      "version": "1.0.0",
-      "id": "O6NPwKlGw",
-      "position": {
-        "x": 1728,
-        "y": 600
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "variable": "{{{args.variables.user.TQID_HW_ENC}}}",
-        "value": "nvenc"
-      }
-    },
-    {
-      "name": "Check Flow Variable (TQID_HW_ENC==qsv)",
-      "sourceRepo": "Community",
-      "pluginName": "checkFlowVariable",
-      "version": "1.0.0",
-      "id": "x-JaLk0uw",
-      "position": {
-        "x": 2028,
-        "y": 588
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "variable": "{{{args.variables.user.TQID_HW_ENC}}}",
-        "value": "qsv"
-      }
-    },
-    {
-      "name": "Set Video Encoder (hevc, slow, 25, qsv)",
-      "sourceRepo": "Community",
-      "pluginName": "ffmpegCommandSetVideoEncoder",
-      "version": "1.0.0",
-      "id": "HJq2m_2B0",
-      "position": {
-        "x": 1920,
-        "y": 840
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "hardwareType": "qsv",
-        "ffmpegPreset": "slow"
-      }
-    },
-    {
-      "name": "Fail Flow (TQID_HW_ENC not set to nvenc or qsv)",
-      "sourceRepo": "Community",
-      "pluginName": "failFlow",
-      "version": "1.0.0",
-      "id": "FiM3o8Sap",
-      "position": {
-        "x": 2388,
-        "y": 576
-      },
-      "fpEnabled": true
     },
     {
       "name": "Execute",
@@ -355,8 +308,8 @@
       "version": "1.0.0",
       "id": "7tY9qP25o",
       "position": {
-        "x": 1284,
-        "y": 1368
+        "x": 1092,
+        "y": 1344
       },
       "fpEnabled": true
     },
@@ -367,27 +320,10 @@
       "version": "1.0.0",
       "id": "8vCesCmcG",
       "position": {
-        "x": 1212,
-        "y": 1728
+        "x": 1056,
+        "y": 1572
       },
       "fpEnabled": true
-    },
-    {
-      "name": "Compare File Size Ratio Live (Other, 110%)",
-      "sourceRepo": "Community",
-      "pluginName": "compareFileSizeRatioLive",
-      "version": "1.0.0",
-      "id": "rwWYJOXAN",
-      "position": {
-        "x": 1248,
-        "y": -24
-      },
-      "fpEnabled": true,
-      "inputsDB": {
-        "compareMethod": "estimatedFinalSize",
-        "thresholdPerc": "110",
-        "checkDelaySeconds": "500"
-      }
     },
     {
       "name": "Compare File Duration Ratio (99.5 < X < 100.5)",
@@ -396,8 +332,8 @@
       "version": "1.0.0",
       "id": "zTMiNz-xW",
       "position": {
-        "x": 1281.5675766261922,
-        "y": 1457.5762902568204
+        "x": 1092,
+        "y": 1464
       },
       "fpEnabled": true
     },
@@ -408,8 +344,8 @@
       "version": "1.0.0",
       "id": "Jc2w3wK-A",
       "position": {
-        "x": 1212,
-        "y": 1848
+        "x": 1056,
+        "y": 1656
       },
       "fpEnabled": true
     },
@@ -420,44 +356,8 @@
       "version": "1.0.0",
       "id": "ocVJtHbRL",
       "position": {
-        "x": 1507.4229674824967,
-        "y": 1463.5008486672714
-      },
-      "fpEnabled": true
-    },
-    {
-      "name": "If the video is HVEC, try to achieve a compression ration of 90% or better.\nIf the video is not HEVC, transcode up to 110% of the size to retain the same codec across the library.",
-      "sourceRepo": "Community",
-      "pluginName": "comment",
-      "version": "1.0.0",
-      "id": "_87wVjvda",
-      "position": {
-        "x": 1891.895684667237,
-        "y": -159.14006765472817
-      },
-      "fpEnabled": true
-    },
-    {
-      "name": "Debug the video bitrate, which can fail",
-      "sourceRepo": "Community",
-      "pluginName": "comment",
-      "version": "1.0.0",
-      "id": "xBKaf4MtT",
-      "position": {
-        "x": 1460.7522512401315,
-        "y": 268.6090201529391
-      },
-      "fpEnabled": true
-    },
-    {
-      "name": "Check Video Bitrate",
-      "sourceRepo": "Community",
-      "pluginName": "checkVideoBitrate",
-      "version": "1.0.0",
-      "id": "Ne1g0oG9Z",
-      "position": {
-        "x": 1260.7704653651797,
-        "y": 286.6971470219315
+        "x": 1308,
+        "y": 1464
       },
       "fpEnabled": true
     },
@@ -468,37 +368,10 @@
       "version": "1.0.0",
       "id": "HMPizoDrE",
       "position": {
-        "x": 960,
-        "y": -84
+        "x": 1080,
+        "y": -264
       },
       "fpEnabled": true
-    },
-    {
-      "name": "Reset Flow Error",
-      "sourceRepo": "Community",
-      "pluginName": "resetFlowError",
-      "version": "1.0.0",
-      "id": "ojO-_RcgS",
-      "position": {
-        "x": 1461.1085880408914,
-        "y": 318.84155759399596
-      },
-      "fpEnabled": true
-    },
-    {
-      "name": "Compare File Size Ratio (10<x<110)",
-      "sourceRepo": "Community",
-      "pluginName": "compareFileSizeRatio",
-      "version": "2.0.0",
-      "id": "dOWPx6Ql1",
-      "position": {
-        "x": 1248,
-        "y": 1584
-      },
-      "fpEnabled": false,
-      "inputsDB": {
-        "greaterThan": "10"
-      }
     },
     {
       "name": "Check File Extension (MKV)",
@@ -507,25 +380,13 @@
       "version": "1.0.0",
       "id": "mL40tNkah",
       "position": {
-        "x": 1224,
-        "y": -408
+        "x": 1128,
+        "y": -432
       },
       "fpEnabled": true,
       "inputsDB": {
         "extensions": "mkv"
       }
-    },
-    {
-      "name": "If the file is encoded with HEVC and is in an MKV, dont worry about transcoding",
-      "sourceRepo": "Community",
-      "pluginName": "comment",
-      "version": "1.0.0",
-      "id": "3OaRE--uQ",
-      "position": {
-        "x": 996,
-        "y": -228
-      },
-      "fpEnabled": true
     },
     {
       "name": "Check Video Codec (AV1)",
@@ -534,8 +395,8 @@
       "version": "1.0.0",
       "id": "b2P2zNcAq",
       "position": {
-        "x": 996,
-        "y": 612
+        "x": 816,
+        "y": 720
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -549,8 +410,8 @@
       "version": "1.0.0",
       "id": "k69d7nYXi",
       "position": {
-        "x": 732,
-        "y": 624
+        "x": 792,
+        "y": 828
       },
       "fpEnabled": true
     },
@@ -561,8 +422,8 @@
       "version": "1.0.0",
       "id": "_EuakLjWc",
       "position": {
-        "x": 1284,
-        "y": 840
+        "x": 1092,
+        "y": 1104
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -579,7 +440,7 @@
       "id": "b6IHvs9Bc",
       "position": {
         "x": 1260,
-        "y": 468
+        "y": 492
       },
       "fpEnabled": true,
       "inputsDB": {
@@ -588,29 +449,27 @@
         "valuesToRemove": "eng,und",
         "condition": "not_equals"
       }
+    },
+    {
+      "name": "Run MKVPropEdit",
+      "sourceRepo": "Community",
+      "pluginName": "runMkvPropEdit",
+      "version": "1.0.0",
+      "id": "opFgwhWdI",
+      "position": {
+        "x": 1092,
+        "y": 1404
+      },
+      "fpEnabled": true
     }
   ],
   "flowEdges": [
-    {
-      "source": "yJbSCeKkc",
-      "sourceHandle": "1",
-      "target": "Gf45xR3Ny",
-      "targetHandle": null,
-      "id": "XkZaaInYP"
-    },
     {
       "source": "yJbSCeKkc",
       "sourceHandle": "2",
       "target": "NiPL78ugI",
       "targetHandle": null,
       "id": "hxXUbDrNm"
-    },
-    {
-      "source": "NiPL78ugI",
-      "sourceHandle": "1",
-      "target": "b5nZiNBc-",
-      "targetHandle": null,
-      "id": "lsoafsvCm"
     },
     {
       "source": "NiPL78ugI",
@@ -627,46 +486,11 @@
       "id": "XQbbxizmb"
     },
     {
-      "source": "O6NPwKlGw",
-      "sourceHandle": "2",
-      "target": "x-JaLk0uw",
-      "targetHandle": null,
-      "id": "ureqD1HZP"
-    },
-    {
-      "source": "x-JaLk0uw",
-      "sourceHandle": "1",
-      "target": "HJq2m_2B0",
-      "targetHandle": null,
-      "id": "uUVRAWjlw"
-    },
-    {
-      "source": "O6NPwKlGw",
-      "sourceHandle": "1",
-      "target": "XEPPTsdQ_",
-      "targetHandle": null,
-      "id": "6LFuOtimc"
-    },
-    {
-      "source": "x-JaLk0uw",
-      "sourceHandle": "2",
-      "target": "FiM3o8Sap",
-      "targetHandle": null,
-      "id": "tUkInif0X"
-    },
-    {
       "source": "8vCesCmcG",
       "sourceHandle": "1",
       "target": "Jc2w3wK-A",
       "targetHandle": null,
       "id": "gEr02Rejq"
-    },
-    {
-      "source": "7tY9qP25o",
-      "sourceHandle": "1",
-      "target": "zTMiNz-xW",
-      "targetHandle": null,
-      "id": "m13qUn9oR"
     },
     {
       "source": "zTMiNz-xW",
@@ -683,41 +507,6 @@
       "id": "W-hUacDDD"
     },
     {
-      "source": "rwWYJOXAN",
-      "sourceHandle": "1",
-      "target": "yJbSCeKkc",
-      "targetHandle": null,
-      "id": "ovZ4-68vg"
-    },
-    {
-      "source": "Gf45xR3Ny",
-      "sourceHandle": "1",
-      "target": "Ne1g0oG9Z",
-      "targetHandle": null,
-      "id": "c5IIyuKRB"
-    },
-    {
-      "source": "b5nZiNBc-",
-      "sourceHandle": "1",
-      "target": "Ne1g0oG9Z",
-      "targetHandle": null,
-      "id": "99v_TKzNQ"
-    },
-    {
-      "source": "Ne1g0oG9Z",
-      "sourceHandle": "1",
-      "target": "wJZS4i2Jn",
-      "targetHandle": null,
-      "id": "mkEW8Dgya"
-    },
-    {
-      "source": "Ne1g0oG9Z",
-      "sourceHandle": "2",
-      "target": "wJZS4i2Jn",
-      "targetHandle": null,
-      "id": "-6KLcJtCm"
-    },
-    {
       "source": "NPbLChdAp",
       "sourceHandle": "1",
       "target": "kEkGD4vWH",
@@ -725,81 +514,11 @@
       "id": "2-jm1NRBC"
     },
     {
-      "source": "Ne1g0oG9Z",
-      "sourceHandle": "err1",
-      "target": "ojO-_RcgS",
-      "targetHandle": null,
-      "id": "zUcKiHSSB"
-    },
-    {
-      "source": "ojO-_RcgS",
-      "sourceHandle": "1",
-      "target": "wJZS4i2Jn",
-      "targetHandle": null,
-      "id": "a3vsiFVOj"
-    },
-    {
-      "source": "dOWPx6Ql1",
-      "sourceHandle": "1",
-      "target": "8vCesCmcG",
-      "targetHandle": null,
-      "id": "uyR98WkTC"
-    },
-    {
-      "source": "dOWPx6Ql1",
-      "sourceHandle": "2",
-      "target": "mDMVe7u2t",
-      "targetHandle": null,
-      "id": "nBXgqxAhq"
-    },
-    {
-      "source": "dOWPx6Ql1",
-      "sourceHandle": "3",
-      "target": "mDMVe7u2t",
-      "targetHandle": null,
-      "id": "J-IZeFUxL"
-    },
-    {
-      "source": "xHN7Df4K1",
-      "sourceHandle": "1",
-      "target": "mL40tNkah",
-      "targetHandle": null,
-      "id": "-p7w0uDGe"
-    },
-    {
       "source": "mL40tNkah",
       "sourceHandle": "1",
       "target": "ec0-JfFxt",
       "targetHandle": null,
       "id": "PhkQ7PADy"
-    },
-    {
-      "source": "mL40tNkah",
-      "sourceHandle": "2",
-      "target": "rwWYJOXAN",
-      "targetHandle": null,
-      "id": "sni0S8ssx"
-    },
-    {
-      "source": "ec0-JfFxt",
-      "sourceHandle": "1",
-      "target": "3OaRE--uQ",
-      "targetHandle": null,
-      "id": "QMF-AFZoU"
-    },
-    {
-      "source": "3OaRE--uQ",
-      "sourceHandle": "1",
-      "target": "HMPizoDrE",
-      "targetHandle": null,
-      "id": "nMOdG7TYM"
-    },
-    {
-      "source": "r2zuF6aV-",
-      "sourceHandle": "1",
-      "target": "b2P2zNcAq",
-      "targetHandle": null,
-      "id": "JVC8RM4VU"
     },
     {
       "source": "b2P2zNcAq",
@@ -814,55 +533,6 @@
       "target": "koRfifocQ",
       "targetHandle": null,
       "id": "WiiEjX-NA"
-    },
-    {
-      "source": "zTMiNz-xW",
-      "sourceHandle": "1",
-      "target": "dOWPx6Ql1",
-      "targetHandle": null,
-      "id": "wC6GPWf31"
-    },
-    {
-      "source": "ec0-JfFxt",
-      "sourceHandle": "2",
-      "target": "2HJ75gpL5",
-      "targetHandle": null,
-      "id": "GXmBfFP84"
-    },
-    {
-      "source": "2HJ75gpL5",
-      "sourceHandle": "1",
-      "target": "NiPL78ugI",
-      "targetHandle": null,
-      "id": "PeogadxlY"
-    },
-    {
-      "source": "koRfifocQ",
-      "sourceHandle": "1",
-      "target": "7tY9qP25o",
-      "targetHandle": null,
-      "id": "lDy5wo_z0"
-    },
-    {
-      "source": "XEPPTsdQ_",
-      "sourceHandle": "1",
-      "target": "7tY9qP25o",
-      "targetHandle": null,
-      "id": "3uTDo3S3x"
-    },
-    {
-      "source": "HJq2m_2B0",
-      "sourceHandle": "1",
-      "target": "7tY9qP25o",
-      "targetHandle": null,
-      "id": "tztZRgJdS"
-    },
-    {
-      "source": "2HJ75gpL5",
-      "sourceHandle": "2",
-      "target": "rwWYJOXAN",
-      "targetHandle": null,
-      "id": "2zoe0fjaX"
     },
     {
       "source": "b2P2zNcAq",
@@ -886,25 +556,11 @@
       "id": "7_ZcHeKdP"
     },
     {
-      "source": "_EuakLjWc",
-      "sourceHandle": "1",
-      "target": "7tY9qP25o",
-      "targetHandle": null,
-      "id": "8EieU3MUy"
-    },
-    {
       "source": "KG1yfeFSv",
       "sourceHandle": "2",
       "target": "87RrXGsRx",
       "targetHandle": null,
       "id": "oPTCuKab-"
-    },
-    {
-      "source": "87RrXGsRx",
-      "sourceHandle": "2",
-      "target": "O6NPwKlGw",
-      "targetHandle": null,
-      "id": "0ToEGgbb0"
     },
     {
       "source": "87RrXGsRx",
@@ -933,6 +589,146 @@
       "target": "r2zuF6aV-",
       "targetHandle": null,
       "id": "9-fK7c2a2"
+    },
+    {
+      "source": "2ltMEGR1s",
+      "sourceHandle": "1",
+      "target": "9BdEySjLN",
+      "targetHandle": null,
+      "id": "FAWRVT7eL"
+    },
+    {
+      "source": "9BdEySjLN",
+      "sourceHandle": "1",
+      "target": "wJZS4i2Jn",
+      "targetHandle": null,
+      "id": "7GxrjZ06c"
+    },
+    {
+      "source": "zTMiNz-xW",
+      "sourceHandle": "1",
+      "target": "8vCesCmcG",
+      "targetHandle": null,
+      "id": "57XI814t7"
+    },
+    {
+      "source": "7tY9qP25o",
+      "sourceHandle": "1",
+      "target": "opFgwhWdI",
+      "targetHandle": null,
+      "id": "MIKo67lnp"
+    },
+    {
+      "source": "opFgwhWdI",
+      "sourceHandle": "1",
+      "target": "zTMiNz-xW",
+      "targetHandle": null,
+      "id": "bw_dNbLAu"
+    },
+    {
+      "source": "koRfifocQ",
+      "sourceHandle": "1",
+      "target": "pjxKYc46a",
+      "targetHandle": null,
+      "id": "Q0QVTYjPR"
+    },
+    {
+      "source": "_EuakLjWc",
+      "sourceHandle": "1",
+      "target": "pjxKYc46a",
+      "targetHandle": null,
+      "id": "bmhjU1v4w"
+    },
+    {
+      "source": "pjxKYc46a",
+      "sourceHandle": "1",
+      "target": "7tY9qP25o",
+      "targetHandle": null,
+      "id": "f0ftaep69"
+    },
+    {
+      "source": "r2zuF6aV-",
+      "sourceHandle": "1",
+      "target": "b2P2zNcAq",
+      "targetHandle": null,
+      "id": "o2Tf5tK7n"
+    },
+    {
+      "source": "xHN7Df4K1",
+      "sourceHandle": "1",
+      "target": "IaIVKlmq4",
+      "targetHandle": null,
+      "id": "HnJJvjOfp"
+    },
+    {
+      "source": "IaIVKlmq4",
+      "sourceHandle": "1",
+      "target": "mL40tNkah",
+      "targetHandle": null,
+      "id": "q5HnmvVbL"
+    },
+    {
+      "source": "ec0-JfFxt",
+      "sourceHandle": "1",
+      "target": "HMPizoDrE",
+      "targetHandle": null,
+      "id": "zx3qns3gP"
+    },
+    {
+      "source": "ec0-JfFxt",
+      "sourceHandle": "2",
+      "target": "72xd4g9Jy",
+      "targetHandle": null,
+      "id": "frggK8UQG"
+    },
+    {
+      "source": "mL40tNkah",
+      "sourceHandle": "2",
+      "target": "72xd4g9Jy",
+      "targetHandle": null,
+      "id": "36RNZ2p3s"
+    },
+    {
+      "source": "72xd4g9Jy",
+      "sourceHandle": "1",
+      "target": "yJbSCeKkc",
+      "targetHandle": null,
+      "id": "AjLNkfwh2"
+    },
+    {
+      "source": "yJbSCeKkc",
+      "sourceHandle": "1",
+      "target": "2ltMEGR1s",
+      "targetHandle": null,
+      "id": "Eh9r3WAuF"
+    },
+    {
+      "source": "NiPL78ugI",
+      "sourceHandle": "1",
+      "target": "2ltMEGR1s",
+      "targetHandle": null,
+      "id": "oVz_-tODH"
+    },
+    {
+      "source": "87RrXGsRx",
+      "sourceHandle": "2",
+      "target": "VNCm142qg",
+      "targetHandle": null,
+      "id": "xFf1yx6vL"
+    },
+    {
+      "source": "VNCm142qg",
+      "sourceHandle": "1",
+      "target": "pjxKYc46a",
+      "targetHandle": null,
+      "id": "XMR67_8tz"
+    },
+    {
+      "source": "2ltMEGR1s",
+      "sourceHandle": "2",
+      "target": "wJZS4i2Jn",
+      "targetHandle": null,
+      "id": "dMXS-ZziD"
     }
   ]
 }
