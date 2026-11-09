@@ -455,6 +455,21 @@ locals {
       description = "Only {{ humanizePercentage $values.A.Value }} of memory is available; containers may be OOM killed."
     }
 
+    # Available memory can look fine while swap sits full of idle pages, leaving no headroom: a
+    # runaway Tdarr then had nowhere to go and thrashed the whole NUC.
+    "Swap nearly full" = {
+      datasource  = "prometheus"
+      panel       = ["overview", "Memory"]
+      expr        = "1 - node_memory_SwapFree_bytes / (node_memory_SwapTotal_bytes > 0)"
+      threshold   = 0.9
+      comparison  = "gt"
+      for         = "30m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "Swap is nearly full on {{ $labels.instance }}"
+      description = "{{ humanizePercentage $values.A.Value }} of swap is in use, so a memory spike has nowhere to go. Find the biggest users with `grep VmSwap /proc/*/status | sort -k2 -n | tail` (then `ps -p <pid>`), and restart them or add swap."
+    }
+
     "Disk I/O saturated" = {
       datasource  = "prometheus"
       panel       = ["overview", "Pressure"]
