@@ -7,6 +7,12 @@ services:
     networks:
       - "edge"
     restart: "unless-stopped"
+    # The only way in from outside, so keep it alive when something else exhausts the NUC: first
+    # call on CPU under contention, memory protected from reclaim, and among the last OOM-killed.
+    # It peaks at ~64 MB and 0.1 of a core, so none of this takes anything from the rest.
+    cpu_shares: 4096
+    mem_reservation: "128m"
+    oom_score_adj: -500
     command:
       - "tunnel"
       - "--no-autoupdate"

@@ -8,6 +8,11 @@ services:
       - "edge"
       - "backend"
     restart: "unless-stopped"
+    # Every request through the tunnel goes through Traefik, so it gets the same protection as
+    # cloudflared (docker/cloudflare.yml). It peaks at ~60 MB and a fraction of a core.
+    cpu_shares: 4096
+    mem_reservation: "128m"
+    oom_score_adj: -500
     command:
       - "--log.level=INFO"
       - "--api.insecure=true"
