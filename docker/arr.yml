@@ -203,6 +203,11 @@ services:
       - "${SPORT_FOLDER}:/media/sports"
     devices:
       - /dev/dri:/dev/dri
+    # A wedged node has twice ballooned and taken the whole NUC (8 GB, swap full) down with it.
+    # Normal transcoding peaks at ~2 GB; the cap means a runaway is OOM-killed and restarted on
+    # its own instead. Swap is capped at the same value, so it fails fast rather than thrashing.
+    mem_limit: "4g"
+    memswap_limit: "4g"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tdarr.entrypoints=web"
