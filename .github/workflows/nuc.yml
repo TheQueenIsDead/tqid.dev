@@ -1,0 +1,42 @@
+name: "NUC"
+
+on:
+  workflow_dispatch:
+    inputs:
+      check:
+        description: "Dry run: show what would change without changing it"
+        type: boolean
+        default: false
+  push:
+    paths:
+      - .github/workflows/nuc.yml
+      - ansible/**
+    branches:
+      - main
+
+# Host configuration outside Docker (ansible/nuc.yml). The runner may only sudo
+# ansible-playbook and the restic commands, so the playbook runs as root and needs no become.
+jobs:
+  nuc:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Run the playbook"
+        env:
+          CHECK: ${{ inputs.check && '--check' || '' }}
+        run: sudo ansible-playbook -i localhost, --diff ${CHECK} ansible/nuc.yml
+
+      # memory.low only protects anything if every cgroup above it has some too - show what took
+      # effect, including whether the containers actually sit under system.slice
+      - name: "Show memory protection"
+        run: |
+          set -euo pipefail
+          for cgroup in system.slice system.slice/snap.docker.dockerd.service \
+            "system.slice/$(systemctl list-units --plain --no-legend --type=service 'actions.runner.*' | awk '{print $1}')"; do
+            echo "${cgroup}: memory.low=$(cat "/sys/fs/cgroup/${cgroup}/memory.low")"
+          done
+          for container in cloudflared traefik; do
+            path="$(cut -d: -f3 "/proc/$(docker inspect -f '{{.State.Pid}}' "${container}")/cgroup")"
+            echo "${container} (${path}): memory.low=$(cat "/sys/fs/cgroup${path}/memory.low")"
+          done

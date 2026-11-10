@@ -1,0 +1,159 @@
+# Host-level configuration for the NUC: the things that live outside Docker. Run by
+# .github/workflows/nuc.yml on the NUC itself, as root, so tasks need no `become`.
+# Bootstrap and the reasoning behind each part: docs/GITHUB.md.
+- name: "NUC host configuration"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    # The user the self-hosted runner runs as: ps -o user= -C Runner.Listener
+    runner_user: "tqid"
+
+  handlers:
+    - name: "Reload systemd"
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    # system.conf is only read by PID 1 itself, so a reload isn't enough
+    - name: "Re-execute systemd"
+      ansible.builtin.command: systemctl daemon-reexec
+
+    - name: "Restart earlyoom"
+      ansible.builtin.systemd:
+        name: "earlyoom"
+        state: "restarted"
+
+  tasks:
+    # A wedged Tdarr node twice filled RAM and swap and left the NUC thrashing for hours: the
+    # kernel's OOM killer never fired because it kept reclaiming just enough to call it progress.
+    # earlyoom kills the biggest process while there is still memory to do it with.
+    - name: "Install earlyoom"
+      ansible.builtin.apt:
+        name: "earlyoom"
+        update_cache: true
+        cache_valid_time: 86400
+
+    - name: "Configure earlyoom"
+      ansible.builtin.copy:
+        dest: "/etc/default/earlyoom"
+        mode: "0644"
+        # Passed unquoted to earlyoom by its unit, so the regex can't contain spaces or quotes.
+        #   -m 5 -s 10: act once available memory is at or below 5% AND free swap at or below 10%
+        #     (swap sits full in normal use, so memory is what decides it)
+        #   -r 3600:    log memory stats hourly rather than every minute
+        #   --avoid:    process names to kill only as a last resort - the way in, and deploys
+        content: |
+          EARLYOOM_ARGS="-m 5 -s 10 -r 3600 --avoid ^(cloudflared|traefik|Runner[.]Listener|Runner[.]Worker|dockerd|containerd|sshd|systemd.*)$"
+      notify: "Restart earlyoom"
+
+    - name: "Enable earlyoom"
+      ansible.builtin.systemd:
+        name: "earlyoom"
+        enabled: true
+        state: "started"
+
+    # earlyoom handles thrashing; this handles a hard hang. systemd pets the hardware watchdog,
+    # and if PID 1 stops responding for 30s the board resets the NUC. Only set when there's a
+    # watchdog device - without one systemd would just log errors.
+    - name: "Check for a hardware watchdog"
+      ansible.builtin.stat:
+        path: "/dev/watchdog0"
+      register: "watchdog"
+
+    - name: "Enable the hardware watchdog"
+      when: "watchdog.stat.exists"
+      block:
+        - name: "Create systemd system.conf.d"
+          ansible.builtin.file:
+            path: "/etc/systemd/system.conf.d"
+            state: "directory"
+            mode: "0755"
+
+        - name: "Configure the watchdog"
+          ansible.builtin.copy:
+            dest: "/etc/systemd/system.conf.d/watchdog.conf"
+            mode: "0644"
+            # RebootWatchdogSec: if a reboot itself hangs, force it after 10 minutes
+            content: |
+              [Manager]
+              RuntimeWatchdogSec=30s
+              RebootWatchdogSec=10min
+          notify: "Re-execute systemd"
+
+    - name: "No hardware watchdog"
+      when: "not watchdog.stat.exists"
+      ansible.builtin.debug:
+        msg: "/dev/watchdog0 is missing, so the watchdog is not enabled. Check `lsmod | grep -i wdt` (Intel: iTCO_wdt)."
+
+    # Keep the runner and dockerd responsive when something else is eating the box, so deploys
+    # still go through. CPU: services default to a weight of 100 and a container's 1024 shares
+    # map to ~39, cloudflared and Traefik's 4096 to ~157.
+    #
+    # memory.low only counts up to what the parent cgroup is itself given, and system.slice gets
+    # nothing by default - without the slice entry, these and the containers' mem_reservation
+    # (docker/cloudflare.yml, docker/traefik.yml) do nothing. The slice's 1G covers the sum of
+    # the reservations inside it with room to spare.
+    - name: "Find the runner's unit"
+      ansible.builtin.command: systemctl list-units --all --plain --no-legend --type=service "actions.runner.*"
+      register: "runner_units"
+      changed_when: false
+      # Read-only, so run it in --check too: the tasks below need its output
+      check_mode: false
+
+    - name: "Check there is exactly one runner"
+      ansible.builtin.assert:
+        that: "runner_units.stdout_lines | length == 1"
+        fail_msg: "Expected one actions.runner.* unit, found: {{ runner_units.stdout_lines }}"
+
+    - name: "Create the drop-in directories"
+      ansible.builtin.file:
+        path: "/etc/systemd/system/{{ item }}.d"
+        state: "directory"
+        mode: "0755"
+      loop:
+        - "{{ runner_units.stdout_lines[0].split()[0] }}"
+        - "snap.docker.dockerd.service"
+        - "system.slice"
+
+    # cgroup settings apply on a daemon-reload. OOMScoreAdjust on the runner only applies when it
+    # next restarts, which this can't do: it would kill the job running the playbook.
+    #
+    # dockerd gets no OOMScoreAdjust: containers can inherit it from dockerd, which would shield
+    # Tdarr too. earlyoom's --avoid covers dockerd instead.
+    - name: "Prioritise the runner, dockerd and system.slice"
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item.unit }}.d/priority.conf"
+        mode: "0644"
+        content: "{{ item.content }}"
+      loop:
+        - unit: "{{ runner_units.stdout_lines[0].split()[0] }}"
+          content: |
+            [Service]
+            CPUWeight=500
+            MemoryLow=256M
+            OOMScoreAdjust=-500
+        - unit: "snap.docker.dockerd.service"
+          content: |
+            [Service]
+            CPUWeight=500
+            MemoryLow=256M
+        - unit: "system.slice"
+          content: |
+            [Slice]
+            MemoryLow=1G
+      loop_control:
+        label: "{{ item.unit }}"
+      notify: "Reload systemd"
+
+    # Managed here so changes go through the repo. Running ansible-playbook as root is
+    # effectively full root, as is `install` - and the runner already is, through the Docker
+    # socket. What keeps it safe is that only pushes to main run on the self-hosted runner.
+    # install and resticprofile are for .github/workflows/restic.yml.
+    - name: "Allow the runner to sudo"
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/github-runner"
+        mode: "0440"
+        content: |
+          {{ runner_user }} ALL=(root) NOPASSWD: /usr/bin/ansible-playbook, /usr/bin/install, /usr/local/bin/resticprofile
+        validate: "visudo -cf %s"
