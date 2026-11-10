@@ -45,6 +45,8 @@ jobs:
             echo "::error::DISCORD_DEPLOY_WEBHOOK isn't set"
             exit 1
           fi
+          # A run-name built from a commit message carries the whole message; keep the subject line
+          TITLE="${TITLE%%$'\n'*}"
           case "$CONCLUSION" in
             success) status="deployed";  color=3066993 ;;
             failure) status="failed";    color=15158332 ;;
