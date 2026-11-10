@@ -108,6 +108,8 @@ apps:
 # Immich is split out because the library is large and slow to push. The database is not
 # copied live - Immich dumps it nightly at 02:00 into backups/ (Administration > Settings >
 # Backup Settings), and that dump is what gets stored here.
+# Schedules are in the host's timezone, Pacific/Auckland (ansible/nuc.yml), as is Immich's
+# (docker/immich.yml), so the dump stays an hour ahead of this backup through DST changes.
 immich:
   inherit: "default"
   # After the night's last backup and its prune, record the size of the whole repository: what B2

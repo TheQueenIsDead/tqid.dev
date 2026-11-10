@@ -9,6 +9,9 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_USERNAME: "postgres"
       DB_DATABASE_NAME: "immich"
+      # The localtime mount below is the snap's UTC one, not the host's, so set it here: Immich's
+      # nightly database dump must land before the 03:00 restic backup (etc/resticprofile.yaml)
+      TZ: "Pacific/Auckland"
     devices:
       - "/dev/dri:/dev/dri"
     volumes:

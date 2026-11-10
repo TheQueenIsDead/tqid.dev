@@ -25,6 +25,19 @@
         state: "restarted"
 
   tasks:
+    # Ubuntu server defaults to UTC, which put the "nightly" restic timers (etc/resticprofile.yaml)
+    # at 3-4pm. systemd recalculates timers when the timezone changes, and the journal stores UTC
+    # regardless, so log timestamps in Loki don't move.
+    - name: "Read the timezone"
+      ansible.builtin.command: timedatectl show --property=Timezone --value
+      register: "timezone"
+      changed_when: false
+      check_mode: false
+
+    - name: "Set the timezone"
+      when: "timezone.stdout != 'Pacific/Auckland'"
+      ansible.builtin.command: timedatectl set-timezone Pacific/Auckland
+
     # A wedged Tdarr node twice filled RAM and swap and left the NUC thrashing for hours: the
     # kernel's OOM killer never fired because it kept reclaiming just enough to call it progress.
     # earlyoom kills the biggest process while there is still memory to do it with.
