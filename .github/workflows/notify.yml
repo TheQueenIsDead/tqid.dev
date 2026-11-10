@@ -16,6 +16,7 @@ on:
       - "Librespeed"
       - "Media"
       - "Memos"
+      - "NUC"
       - "Portainer"
       - "Recipes"
       - "Restic"
