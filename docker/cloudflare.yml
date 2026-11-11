@@ -6,6 +6,12 @@ services:
     container_name: "cloudflared"
     networks:
       - "edge"
+      - "ssh"
+    # ssh.tqid.dev goes to the host's sshd (terraform/cloudflare/ssh.tf), not a container. Reached
+    # at the ssh network's gateway rather than host-gateway, so the connection comes from that
+    # network: the host firewall (ansible/nuc.yml) drops port 22 from every other container.
+    extra_hosts:
+      - "host.docker.internal:10.222.22.1"
     restart: "unless-stopped"
     # The only way in from outside, so keep it alive when something else exhausts the NUC: first
     # call on CPU under contention, memory protected from reclaim, and among the last OOM-killed.
@@ -28,3 +34,11 @@ services:
 networks:
   edge:
     external: true
+  # cloudflared's own route to the host's sshd. Outside Docker's default 172.16/12 address pools so
+  # it can't collide with another network, and kept in step with ansible/nuc.yml.
+  ssh:
+    name: "ssh"
+    ipam:
+      config:
+        - subnet: "10.222.22.0/29"
+          gateway: "10.222.22.1"

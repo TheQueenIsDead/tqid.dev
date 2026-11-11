@@ -81,6 +81,10 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
           service  = s.name == "traefik" ? "http://traefik:8080" : "http://traefik:80"
         }
       ],
+      [{
+        hostname = "ssh.${var.cloudflare_zone_name}"
+        service  = "ssh://host.docker.internal:22"
+      }],
       [{ service = "http_status:404" }],
     )
   }
