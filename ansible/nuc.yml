@@ -12,7 +12,7 @@
     # Browser SSH (terraform/cloudflare/ssh.tf): Cloudflare's certificates name the user by the
     # part of their Access email before the @, so map that to the account it logs in as.
     ssh_user: "tqid"
-    ssh_principals: []
+    ssh_principals: ["me"]
     ssh_ca_public_key: "{{ playbook_dir }}/files/cloudflare-ssh-ca.pub"
     # cloudflared's ssh network (docker/cloudflare.yml), the only container network allowed to
     # reach sshd

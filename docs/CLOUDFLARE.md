@@ -20,8 +20,8 @@ The host side is in `ansible/nuc.yml`, and needs two things from you once:
 
 1. After Terraform has applied, copy the `ssh_ca_public_key` output (HCP Terraform, the
    `cloudflare` workspace's outputs) into `ansible/files/cloudflare-ssh-ca.pub`.
-2. Set `ssh_principals` in `ansible/nuc.yml` to the part of your Access email before the `@`.
-   Certificates carry that as their username, and this maps it to `tqid`.
+2. Set `ssh_principals` in `ansible/nuc.yml` to the part of your Access email before the `@`
+   (currently `me`). Certificates carry that as their username, and this maps it to `tqid`.
 
 Then log in at `ssh.tqid.dev` as `tqid`. It does not help if the NUC hangs: the tunnel goes down
 with it.
