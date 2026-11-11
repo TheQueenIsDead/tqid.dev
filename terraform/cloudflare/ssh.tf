@@ -1,9 +1,10 @@
 # A shell on the NUC in the browser, at ssh.tqid.dev, through the tunnel and behind Access.
-# Cloudflare renders the terminal (application type "ssh"), and signs a short-lived SSH certificate
-# for whoever passes the policy, which sshd trusts (ansible/nuc.yml). So there are no keys or
-# passwords to hold, and no way to log in that skips Access.
+# Cloudflare renders the terminal (application type "ssh"); sshd then asks for tqid's password, so
+# a login needs both the GitHub account and the password.
+#
+# No short-lived certificates: the browser terminal only presents one for the user named by the
+# email prefix ("me"), never tqid, and a passwordless account behind GitHub alone would be weaker.
 #   https://developers.cloudflare.com/cloudflare-one/applications/non-http/browser-rendering/
-#   https://developers.cloudflare.com/cloudflare-one/identity/users/short-lived-certificates/
 
 resource "cloudflare_zero_trust_access_application" "ssh" {
   zone_id = data.cloudflare_zone.this.id
@@ -21,11 +22,6 @@ resource "cloudflare_zero_trust_access_application" "ssh" {
   }]
 }
 
-resource "cloudflare_zero_trust_access_short_lived_certificate" "ssh" {
-  zone_id = data.cloudflare_zone.this.id
-  app_id  = cloudflare_zero_trust_access_application.ssh.id
-}
-
 resource "cloudflare_dns_record" "ssh" {
   zone_id = data.cloudflare_zone.this.id
   name    = "ssh.${var.cloudflare_zone_name}"
@@ -33,9 +29,4 @@ resource "cloudflare_dns_record" "ssh" {
   type    = "CNAME"
   ttl     = 1
   proxied = true
-}
-
-# Goes in ansible/files/cloudflare-ssh-ca.pub, for sshd to trust. A public key, so safe to commit.
-output "ssh_ca_public_key" {
-  value = cloudflare_zero_trust_access_short_lived_certificate.ssh.public_key
 }
