@@ -238,6 +238,8 @@
 
     # Only tqid logs in, and never root. Password logins stay on for now, as they're how the LAN
     # gets in: containers can't reach sshd (above), and the browser shell is behind Access.
+    # VERBOSE logs each key or certificate offered (accepted or not) with its fingerprint, and a
+    # certificate's ID and principals, so the journal shows who logged in with what.
     - name: "Restrict sshd logins"
       ansible.builtin.copy:
         dest: "/etc/ssh/sshd_config.d/10-logins.conf"
@@ -245,6 +247,7 @@
         content: |
           PermitRootLogin no
           AllowUsers {{ ssh_user }}
+          LogLevel VERBOSE
       notify: "Reload sshd"
 
     # Trust the certificates Cloudflare Access signs for ssh.tqid.dev, so the browser shell needs
