@@ -9,11 +9,8 @@
   vars:
     # The user the self-hosted runner runs as: ps -o user= -C Runner.Listener
     runner_user: "tqid"
-    # Browser SSH (terraform/cloudflare/ssh.tf): Cloudflare's certificates name the user by the
-    # part of their Access email before the @, so map that to the account it logs in as.
+    # The only account sshd lets in
     ssh_user: "tqid"
-    ssh_principals: ["me"]
-    ssh_ca_public_key: "{{ playbook_dir }}/files/cloudflare-ssh-ca.pub"
     # cloudflared's ssh network (docker/cloudflare.yml), the only container network allowed to
     # reach sshd
     ssh_ingress_subnet: "10.222.22.0/29"
@@ -250,46 +247,17 @@
           LogLevel VERBOSE
       notify: "Reload sshd"
 
-    # Trust the certificates Cloudflare Access signs for ssh.tqid.dev, so the browser shell needs
-    # no key or password. Certificates are only accepted for the principals listed for a user, and
-    # existing keys and passwords work as before. Skipped until the CA key from Terraform's
-    # ssh_ca_public_key output is in ansible/files and ssh_principals is set.
-    - name: "Check for Cloudflare's SSH CA key"
-      ansible.builtin.stat:
-        path: "{{ ssh_ca_public_key }}"
-      register: "ssh_ca"
-
-    - name: "Trust Cloudflare Access SSH certificates"
-      when: "ssh_ca.stat.exists and ssh_principals | length > 0"
-      block:
-        - name: "Install the CA key"
-          ansible.builtin.copy:
-            src: "{{ ssh_ca_public_key }}"
-            dest: "/etc/ssh/cloudflare-ca.pub"
-            mode: "0644"
-          notify: "Reload sshd"
-
-        - name: "Create the principals directory"
-          ansible.builtin.file:
-            path: "/etc/ssh/principals"
-            state: "directory"
-            mode: "0755"
-
-        - name: "Map certificate principals to {{ ssh_user }}"
-          ansible.builtin.copy:
-            dest: "/etc/ssh/principals/{{ ssh_user }}"
-            mode: "0644"
-            content: "{{ ssh_principals | join('\n') }}\n"
-
-        - name: "Configure sshd"
-          ansible.builtin.copy:
-            dest: "/etc/ssh/sshd_config.d/cloudflare-access.conf"
-            mode: "0644"
-            content: |
-              PubkeyAuthentication yes
-              TrustedUserCAKeys /etc/ssh/cloudflare-ca.pub
-              AuthorizedPrincipalsFile /etc/ssh/principals/%u
-          notify: "Reload sshd"
+    # The browser shell briefly trusted Cloudflare Access's SSH certificates, which went unused (see
+    # terraform/cloudflare/ssh.tf). Removes what that left on the host; safe to delete once applied.
+    - name: "Remove Cloudflare Access SSH certificate trust"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: "absent"
+      loop:
+        - "/etc/ssh/sshd_config.d/cloudflare-access.conf"
+        - "/etc/ssh/cloudflare-ca.pub"
+        - "/etc/ssh/principals"
+      notify: "Reload sshd"
 
     # Managed here so changes go through the repo. Running ansible-playbook as root is
     # effectively full root, as is `install` - and the runner already is, through the Docker
