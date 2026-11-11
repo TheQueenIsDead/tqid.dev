@@ -18,10 +18,10 @@ resource "cloudflare_ruleset" "waf_custom" {
   kind        = "zone"
   phase       = "http_request_firewall_custom"
 
-  rules {
+  rules = [{
     description = "Public apps: NZ and AU only"
     action      = "block"
     expression  = "(http.host in {${join(" ", formatlist("\"%s\"", local.public_hostnames))}} and not ip.src.country in {\"NZ\" \"AU\"})"
     enabled     = true
-  }
+  }]
 }

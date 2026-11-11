@@ -11,8 +11,8 @@ terraform {
   required_providers {
     cloudflare = {
       source = "cloudflare/cloudflare"
-      # v5 rewrote the Zero Trust resources used here; upgrade deliberately, not via init -upgrade
-      version = "~> 4.52"
+      # 5.19 is the first release whose built-in state upgraders migrate v4 state on plan
+      version = "~> 5.19"
     }
   }
 }
