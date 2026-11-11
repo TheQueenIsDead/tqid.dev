@@ -9,6 +9,14 @@
   vars:
     # The user the self-hosted runner runs as: ps -o user= -C Runner.Listener
     runner_user: "tqid"
+    # Browser SSH (terraform/cloudflare/ssh.tf): Cloudflare's certificates name the user by the
+    # part of their Access email before the @, so map that to the account it logs in as.
+    ssh_user: "tqid"
+    ssh_principals: []
+    ssh_ca_public_key: "{{ playbook_dir }}/files/cloudflare-ssh-ca.pub"
+    # cloudflared's ssh network (docker/cloudflare.yml), the only container network allowed to
+    # reach sshd
+    ssh_ingress_subnet: "10.222.22.0/29"
 
   handlers:
     - name: "Reload systemd"
@@ -22,6 +30,18 @@
     - name: "Restart earlyoom"
       ansible.builtin.systemd:
         name: "earlyoom"
+        state: "restarted"
+
+    # Ubuntu's ssh unit runs `sshd -t` before reloading, so a broken config is refused and the
+    # running sshd keeps the old one.
+    - name: "Reload sshd"
+      ansible.builtin.systemd:
+        name: "ssh"
+        state: "reloaded"
+
+    - name: "Restart ssh-guard"
+      ansible.builtin.systemd:
+        name: "ssh-guard"
         state: "restarted"
 
   tasks:
@@ -158,6 +178,115 @@
       loop_control:
         label: "{{ item.unit }}"
       notify: "Reload systemd"
+
+    # Every container can reach the host's own addresses, so a compromised app could otherwise try
+    # sshd. Drop port 22 from Docker's bridges unless it comes from cloudflared's ssh network.
+    # The LAN is unaffected, and so is every other port (Jellyfin's webhook to Alloy, for one).
+    #
+    # Its own table, loaded by its own unit: nftables.service's config flushes the whole ruleset,
+    # Docker's rules included, so it stays off. Docker only adds forward and NAT rules, which
+    # don't see traffic addressed to the host itself.
+    - name: "Install nftables"
+      ansible.builtin.apt:
+        name: "nftables"
+
+    - name: "Write the ssh guard rules"
+      ansible.builtin.copy:
+        dest: "/etc/ssh-guard.nft"
+        mode: "0644"
+        # The empty table and delete make reloading replace the rules rather than add to them
+        content: |
+          table inet ssh_guard
+          delete table inet ssh_guard
+          table inet ssh_guard {
+            chain input {
+              type filter hook input priority filter; policy accept;
+              iifname "docker0" tcp dport 22 drop
+              iifname "br-*" ip saddr != {{ ssh_ingress_subnet }} tcp dport 22 drop
+            }
+          }
+        validate: "nft -c -f %s"
+      notify: "Restart ssh-guard"
+
+    - name: "Write the ssh guard unit"
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/ssh-guard.service"
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Drop container connections to sshd, except from cloudflared
+          After=network-pre.target
+
+          [Service]
+          Type=oneshot
+          RemainAfterExit=yes
+          ExecStart=/usr/sbin/nft -f /etc/ssh-guard.nft
+          ExecStop=/usr/sbin/nft delete table inet ssh_guard
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - "Reload systemd"
+        - "Restart ssh-guard"
+
+    - name: "Enable the ssh guard"
+      ansible.builtin.systemd:
+        name: "ssh-guard"
+        enabled: true
+        state: "started"
+        daemon_reload: true
+
+    # Only tqid logs in, and never root. Password logins stay on for now, as they're how the LAN
+    # gets in: containers can't reach sshd (above), and the browser shell is behind Access.
+    - name: "Restrict sshd logins"
+      ansible.builtin.copy:
+        dest: "/etc/ssh/sshd_config.d/10-logins.conf"
+        mode: "0644"
+        content: |
+          PermitRootLogin no
+          AllowUsers {{ ssh_user }}
+      notify: "Reload sshd"
+
+    # Trust the certificates Cloudflare Access signs for ssh.tqid.dev, so the browser shell needs
+    # no key or password. Certificates are only accepted for the principals listed for a user, and
+    # existing keys and passwords work as before. Skipped until the CA key from Terraform's
+    # ssh_ca_public_key output is in ansible/files and ssh_principals is set.
+    - name: "Check for Cloudflare's SSH CA key"
+      ansible.builtin.stat:
+        path: "{{ ssh_ca_public_key }}"
+      register: "ssh_ca"
+
+    - name: "Trust Cloudflare Access SSH certificates"
+      when: "ssh_ca.stat.exists and ssh_principals | length > 0"
+      block:
+        - name: "Install the CA key"
+          ansible.builtin.copy:
+            src: "{{ ssh_ca_public_key }}"
+            dest: "/etc/ssh/cloudflare-ca.pub"
+            mode: "0644"
+          notify: "Reload sshd"
+
+        - name: "Create the principals directory"
+          ansible.builtin.file:
+            path: "/etc/ssh/principals"
+            state: "directory"
+            mode: "0755"
+
+        - name: "Map certificate principals to {{ ssh_user }}"
+          ansible.builtin.copy:
+            dest: "/etc/ssh/principals/{{ ssh_user }}"
+            mode: "0644"
+            content: "{{ ssh_principals | join('\n') }}\n"
+
+        - name: "Configure sshd"
+          ansible.builtin.copy:
+            dest: "/etc/ssh/sshd_config.d/cloudflare-access.conf"
+            mode: "0644"
+            content: |
+              PubkeyAuthentication yes
+              TrustedUserCAKeys /etc/ssh/cloudflare-ca.pub
+              AuthorizedPrincipalsFile /etc/ssh/principals/%u
+          notify: "Reload sshd"
 
     # Managed here so changes go through the repo. Running ansible-playbook as root is
     # effectively full root, as is `install` - and the runner already is, through the Docker
