@@ -85,5 +85,29 @@ services:
       - 'alloy.metrics.port=8081'
     restart: "unless-stopped"
 
+  # Disk health (SMART) for the boot SSD (sda) and the Unitek USB drive (sdb), which holds media,
+  # Immich, app config and backup sources. Scraped by etc/alloy/apps.alloy, alerted on in
+  # terraform/grafana/alerts.tf. Disks are found with `smartctl --scan`, so only the ones passed
+  # in here are seen; USB enclosures need SAT pass-through, which smartctl detects itself.
+  #   https://github.com/prometheus-community/smartctl_exporter
+  # Root with only SYS_RAWIO, which ATA pass-through (SG_IO) needs, and a read-only filesystem.
+  # no-new-privileges isn't set, as for drm-exporter above.
+  smartctl-exporter:
+    container_name: smartctl-exporter
+    image: prometheuscommunity/smartctl-exporter:v0.15.0
+    user: "0"
+    devices:
+      - '/dev/sda:/dev/sda'
+      - '/dev/sdb:/dev/sdb'
+    cap_drop:
+      - ALL
+    cap_add:
+      - SYS_RAWIO
+    read_only: true
+    labels:
+      - 'alloy.metrics.scrape=true'
+      - 'alloy.metrics.port=9633'
+    restart: "unless-stopped"
+
 volumes:
   alloy-data:

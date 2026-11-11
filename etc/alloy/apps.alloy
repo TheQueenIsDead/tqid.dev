@@ -80,12 +80,26 @@ prometheus.relabel "apps" {
 			"quic_client_latest_rtt",
 			// iGPU (drm-exporter): engine busy, clocks, power. ~12 series.
 			"drm_(info|engine_utilization_ratio|frequency_hertz|power_watts|temperature_celsius)",
+			// Disk health (smartctl-exporter): overall verdict, temperature, age, and each SMART
+			// attribute's raw value (see the rule below). ~60 series for two disks.
+			"smartctl_device",
+			"smartctl_device_(smart_status|smartctl_exit_status|temperature|power_on_seconds|attribute)",
 			// Tdarr (tdarr-exporter): library and queue counts, and progress of the job each worker is on.
 			// Workers keep their IDs between jobs, so only worker_info (labelled with the file) changes
 			// series per job: a couple alive at a time.
 			"tdarr_(up|server_healthy|files|size_diff_bytes|library_(info|files|size_diff_bytes|transcodes|health_checks|video_codecs))",
 			"tdarr_node_worker_(info|idle|ratio|fps|eta_seconds|job_start_timestamp_seconds|original_file_size_bytes|est_file_size_bytes)",
 		], "|")
+	}
+
+	// Each SMART attribute comes as raw, value, worst and thresh. The raw counts (bad sectors, CRC
+	// errors) are what the alerts watch, and smart_status already reports any value at or below
+	// its threshold, so the other three would only quadruple the series.
+	rule {
+		source_labels = ["__name__", "attribute_value_type"]
+		separator     = ";"
+		action        = "drop"
+		regex         = "smartctl_device_attribute;(value|worst|thresh)"
 	}
 
 	forward_to = [prometheus.remote_write.grafana_cloud.receiver]

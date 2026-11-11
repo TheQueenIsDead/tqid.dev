@@ -413,6 +413,79 @@ locals {
       description = "{{ $values.A.Value }} kernel disk/I/O error lines in the last 5m. Check `journalctl -k` for the affected device."
     }
 
+    # SMART, from smartctl-exporter (docker/alloy.yml). The disk's own verdict: it trips when an
+    # attribute crosses the manufacturer's failure threshold.
+    "Disk failing" = {
+      datasource  = "prometheus"
+      panel       = ["overview", "Disk health"]
+      expr        = "min by (instance, device) (smartctl_device_smart_status)"
+      threshold   = 1
+      comparison  = "lt"
+      for         = "5m"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "{{ $labels.device }} reports it is failing"
+      description = "{{ $labels.device }}'s SMART self-assessment has failed. Copy anything not in the B2 backup off it now, check `sudo smartctl -a /dev/{{ $labels.device }}`, and plan a replacement."
+    }
+
+    # A disk can pass its own verdict for months while sectors go bad, so watch the counts grow.
+    # Reallocated (5), reported uncorrectable (187), pending (197) and offline uncorrectable (198).
+    "Disk sectors going bad" = {
+      datasource  = "prometheus"
+      panel       = ["overview", "Bad sectors"]
+      expr        = "max by (instance, device) (delta(smartctl_device_attribute{attribute_id=~\"5|187|197|198\", attribute_value_type=\"raw\"}[24h]))"
+      threshold   = 0
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "{{ $labels.device }} has new bad sectors"
+      description = "{{ $labels.device }} gained {{ humanize $values.A.Value }} reallocated, pending or uncorrectable sectors in the last 24h, the usual early sign of a failing disk. Check `sudo smartctl -A /dev/{{ $labels.device }}`, and make sure the last backup succeeded."
+    }
+
+    # CRC errors (199) and command timeouts (188) are the link, not the platters: for the Unitek,
+    # usually the USB cable, port or enclosure.
+    "Disk link errors" = {
+      datasource  = "prometheus"
+      panel       = ["overview", "Disk health"]
+      expr        = "max by (instance, device) (delta(smartctl_device_attribute{attribute_id=~\"188|199\", attribute_value_type=\"raw\"}[24h]))"
+      threshold   = 0
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.device }} is seeing connection errors"
+      description = "{{ $labels.device }} logged {{ humanize $values.A.Value }} new CRC errors or command timeouts in the last 24h. These come from the connection rather than the disk: reseat or replace the cable, or try another USB port."
+    }
+
+    "Disk running hot" = {
+      datasource  = "prometheus"
+      panel       = ["overview", "Disk temperature"]
+      expr        = "max by (instance, device) (smartctl_device_temperature{temperature_type=\"current\"})"
+      threshold   = 55
+      comparison  = "gt"
+      for         = "30m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.device }} is running hot"
+      description = "{{ $labels.device }} has been at {{ humanize $values.A.Value }}C for 30m. Hard drives wear faster above about 50C; check the enclosure's airflow."
+    }
+
+    # Every SMART alert above treats missing data as OK, so catch the exporter or a disk dropping
+    # out. Only while node metrics arrive, so it doesn't echo Host down.
+    "Disk health unknown" = {
+      datasource  = "prometheus"
+      panel       = ["overview", "Disk health"]
+      expr        = "(count(smartctl_device_smart_status) or on() vector(0)) and on() (sum(up{job=\"integrations/node_exporter\"}) > 0)"
+      threshold   = 2
+      comparison  = "lt"
+      for         = "15m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "SMART data is missing for a disk"
+      description = "Only {{ $values.A.Value }} of the 2 disks are reporting SMART data, so their health isn't being watched. Check `docker logs smartctl-exporter` and that it can see /dev/sda and /dev/sdb."
+    }
+
     # NUC CPUs throttle at about 100C; sustained heat usually means a failing fan or poor airflow.
     "Running hot" = {
       datasource  = "prometheus"

@@ -1139,13 +1139,203 @@
       }
     },
     {
+      "id": 28,
+      "type": "stat",
+      "title": "Disk health",
+      "description": "SMART overall verdict per disk, from smartctl-exporter. FAILING means the disk itself predicts failure: copy anything important off it.",
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "expr": "min by (device) (smartctl_device_smart_status)",
+          "legendFormat": "{{device}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "FAILING",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Passed",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 29,
+      "type": "stat",
+      "title": "Bad sectors",
+      "description": "Reallocated, pending and uncorrectable sectors (SMART 5, 197, 198). Any number that keeps growing means the disk is failing.",
+      "gridPos": {
+        "x": 8,
+        "y": 34,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "expr": "sum by (device) (smartctl_device_attribute{attribute_id=~\"5|197|198\", attribute_value_type=\"raw\"})",
+          "legendFormat": "{{device}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 30,
+      "type": "stat",
+      "title": "Disk temperature",
+      "description": "Each disk's own temperature sensor. Hard drives wear faster above about 50C.",
+      "gridPos": {
+        "x": 16,
+        "y": 34,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "expr": "max by (device) (smartctl_device_temperature{temperature_type=\"current\"})",
+          "legendFormat": "{{device}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 55
+              }
+            ]
+          },
+          "mappings": [],
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
       "id": 19,
       "type": "row",
       "title": "Transcoding",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 34,
+        "y": 38,
         "w": 24,
         "h": 1
       },
@@ -1158,7 +1348,7 @@
       "description": "Files still in AV1, which some clients can't play. Tdarr's flow converts them to HEVC.",
       "gridPos": {
         "x": 0,
-        "y": 35,
+        "y": 39,
         "w": 4,
         "h": 4
       },
@@ -1220,7 +1410,7 @@
       "description": "Files waiting for a transcode.",
       "gridPos": {
         "x": 4,
-        "y": 35,
+        "y": 39,
         "w": 4,
         "h": 4
       },
@@ -1278,7 +1468,7 @@
       "description": "Files whose last transcode failed. Their job reports are in Loki: {job=\"tdarr/job-reports\"}.",
       "gridPos": {
         "x": 8,
-        "y": 35,
+        "y": 39,
         "w": 4,
         "h": 4
       },
@@ -1340,7 +1530,7 @@
       "description": "Files that failed Tdarr's health check, usually a damaged file.",
       "gridPos": {
         "x": 12,
-        "y": 35,
+        "y": 39,
         "w": 4,
         "h": 4
       },
@@ -1402,7 +1592,7 @@
       "description": "Net space Tdarr has saved across the files currently in the libraries.",
       "gridPos": {
         "x": 16,
-        "y": 35,
+        "y": 39,
         "w": 4,
         "h": 4
       },
@@ -1461,7 +1651,7 @@
       "description": "Cores in use. A hardware transcode needs about one, plus decoding when the source can't be decoded on the iGPU (AV1).",
       "gridPos": {
         "x": 20,
-        "y": 35,
+        "y": 39,
         "w": 4,
         "h": 4
       },
@@ -1522,7 +1712,7 @@
       "description": "Busy share of each iGPU engine (drm-exporter). Video is Quick Sync encode/decode: flat at 0 while Tdarr or Jellyfin pegs the CPU means they're transcoding in software.",
       "gridPos": {
         "x": 0,
-        "y": 39,
+        "y": 43,
         "w": 12,
         "h": 8
       },
@@ -1592,7 +1782,7 @@
       "description": "Files per video codec across Tdarr's libraries.",
       "gridPos": {
         "x": 12,
-        "y": 39,
+        "y": 43,
         "w": 12,
         "h": 8
       },
