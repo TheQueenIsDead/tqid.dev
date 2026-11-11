@@ -1,4 +1,7 @@
 name: "Restic"
+# Says what a run by hand did, in the Actions list and Deploy Notify's Discord post. Pushes keep the
+# commit message GitHub would show anyway.
+run-name: ${{ github.event_name == 'workflow_dispatch' && (inputs.command == 'schedule' && 'Config and timers deployed' || format('{0} on {1}', inputs.command, inputs.profile)) || github.event.head_commit.message }}
 
 on:
   workflow_dispatch:

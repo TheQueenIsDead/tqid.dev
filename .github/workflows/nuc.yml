@@ -1,7 +1,7 @@
 name: "NUC"
-# Shown in Deploy Notify's Discord post, so a dry run isn't mistaken for a change. Pushes keep the
-# commit message GitHub would show anyway.
-run-name: ${{ github.event_name == 'workflow_dispatch' && (inputs.check && 'Check only, nothing changed' || 'Run by hand') || github.event.head_commit.message }}
+# Says what a run by hand did, in the Actions list and Deploy Notify's Discord post, so a dry run
+# isn't mistaken for a change. Pushes keep the commit message GitHub would show anyway.
+run-name: ${{ github.event_name == 'workflow_dispatch' && (inputs.check && 'Check only, nothing changed' || 'Playbook applied') || github.event.head_commit.message }}
 
 on:
   workflow_dispatch:

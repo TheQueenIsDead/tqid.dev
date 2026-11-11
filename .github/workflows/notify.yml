@@ -34,24 +34,45 @@ jobs:
     steps:
       - env:
           WEBHOOK: ${{ secrets.DISCORD_DEPLOY_WEBHOOK }}
-          NAME: ${{ github.event.workflow_run.name }}
+          # The workflow's own name: workflow_run.name is the run's name, which a run-name replaces
+          WORKFLOW: ${{ github.event.workflow.name }}
+          EVENT: ${{ github.event.workflow_run.event }}
           CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           TITLE: ${{ github.event.workflow_run.display_title }}
+          COMMIT: ${{ github.event.workflow_run.head_commit.message }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
           ACTOR: ${{ github.event.workflow_run.actor.login }}
           URL: ${{ github.event.workflow_run.html_url }}
         # Values go through env and jq, never straight into the script, as commit titles are free text.
+        #
+        # A push says which commit it deployed. A run by hand says what it did, from the workflow's
+        # run-name (e.g. "backup on all"), and which commit it ran from - its title would otherwise
+        # just repeat the workflow's name.
         run: |
           if [ -z "$WEBHOOK" ]; then
             echo "::error::DISCORD_DEPLOY_WEBHOOK isn't set"
             exit 1
           fi
-          # A run-name built from a commit message carries the whole message; keep the subject line
+          # Commit messages, and run-names built from them, carry the whole message; keep the subject
           TITLE="${TITLE%%$'\n'*}"
+          COMMIT="${COMMIT%%$'\n'*}"
+          if [ "$EVENT" = "push" ]; then
+            what="$COMMIT"
+          else
+            case "$EVENT" in
+              workflow_dispatch) how="Run by hand" ;;
+              *)                 how="Run on $EVENT" ;;
+            esac
+            if [ "$TITLE" != "$WORKFLOW" ]; then
+              how="$how: $TITLE"
+            fi
+            what="$how"$'\n'"at ${SHA:0:7}: $COMMIT"
+          fi
           case "$CONCLUSION" in
-            success) status="deployed";  color=3066993 ;;
+            success) status=$([ "$EVENT" = "push" ] && echo "deployed" || echo "succeeded"); color=3066993 ;;
             failure) status="failed";    color=15158332 ;;
             *)       status="$CONCLUSION"; color=9807270 ;;
           esac
-          jq -n --arg title "$NAME $status" --arg url "$URL" --arg desc "$TITLE"$'\n'"by $ACTOR" --argjson color "$color" \
+          jq -n --arg title "$WORKFLOW $status" --arg url "$URL" --arg desc "$what"$'\n'"by $ACTOR" --argjson color "$color" \
             '{embeds: [{title: $title, url: $url, description: $desc, color: $color}]}' |
             curl -fsS -H "Content-Type: application/json" -d @- "$WEBHOOK"
