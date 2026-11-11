@@ -91,14 +91,16 @@ services:
   # in here are seen; USB enclosures need SAT pass-through, which smartctl detects itself.
   #   https://github.com/prometheus-community/smartctl_exporter
   # Root with only SYS_RAWIO, which ATA pass-through (SG_IO) needs, and a read-only filesystem.
+  # The disks are read-only (`:r`) too: reading SMART data doesn't need to open them for writing,
+  # as SYS_RAWIO allows the pass-through commands on a read-only handle.
   # no-new-privileges isn't set, as for drm-exporter above.
   smartctl-exporter:
     container_name: smartctl-exporter
     image: prometheuscommunity/smartctl-exporter:v0.15.0
     user: "0"
     devices:
-      - '/dev/sda:/dev/sda'
-      - '/dev/sdb:/dev/sdb'
+      - '/dev/sda:/dev/sda:r'
+      - '/dev/sdb:/dev/sdb:r'
     cap_drop:
       - ALL
     cap_add:
