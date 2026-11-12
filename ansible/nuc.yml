@@ -259,6 +259,16 @@
         - "/etc/ssh/principals"
       notify: "Reload sshd"
 
+    # For the weekly Restore Test workflow, which reads restic's JSON listings and checks the
+    # restored SQLite databases
+    - name: "Install the restore test's tools"
+      ansible.builtin.apt:
+        name:
+          - "jq"
+          - "sqlite3"
+        update_cache: true
+        cache_valid_time: 86400
+
     # Managed here so changes go through the repo. Running ansible-playbook as root is
     # effectively full root, as is `install` - and the runner already is, through the Docker
     # socket. What keeps it safe is that only pushes to main run on the self-hosted runner.
