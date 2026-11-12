@@ -181,7 +181,37 @@ The first `apps` backup uploads everything and will take a while. `immich` will 
 Both are `priority: low` and `ionice` class 2/7, so they should stay out of the way, but it's
 worth kicking the first one off manually rather than finding out at 02:00.
 
-A restore is the only real test of a backup. Worth doing once, now, before it matters.
+A restore is the only real test of a backup, which is what the restore test below automates.
+
+## Restore test
+
+Every Sunday morning the [Restore Test workflow](../.github/workflows/restore-test.yml) pulls real
+data back out of B2 with `restic dump` and checks it:
+
+- **Immich originals** — 20 random photos and videos (200MB or under) from the latest `immich`
+  snapshot, hashed against the live files. Files deleted or changed since the backup are skipped.
+- **Immich database dump** — the newest `backups/*.sql.gz`, decompressed end to end, checked to
+  be a `pg_dump` and no more than 2 days older than the snapshot.
+- **App databases** — every SQLite file in the latest `apps` snapshot (Memos, Mealie, the arrs,
+  Jellyfin...) through `PRAGMA integrity_check`, one matrix job each so a corrupt one shows by
+  name in the run.
+
+A `snapshots` job lists both snapshots once; the `immich` and `databases` jobs read those listings
+from a folder in `/tmp` for the run, and a `report` job adds up the results and removes it. All of
+them are pinned to the `nuc` runner label, which is what lets them share that folder.
+
+It runs on the self-hosted runner as `tqid`, not root, with the repository credentials from the
+same GitHub secrets as the Restic workflow, the `restic` that workflow installs, and the `jq` and
+`sqlite3` that `ansible/nuc.yml` installs. It uses no `sudo`. It posts its result as OTLP metrics
+to Alloy on `127.0.0.1:4318` ([`etc/alloy/push.alloy`](../etc/alloy/push.alloy)), which only
+processes on the host can reach, and Alloy forwards them to Grafana with its own credentials.
+
+Unlike the backups it runs from GitHub's schedule (18:00 UTC Saturdays, 07:00 NZDT / 06:00 NZST);
+a missed week alerts as stale. To run it now, start the workflow from the Actions tab. Failures
+show as annotations on the run, and Deploy Notify posts each run's result to Discord.
+
+It doesn't restore a whole app and start it; that is still worth doing by hand now and then,
+with the commands above.
 
 ## Monitoring
 
@@ -192,6 +222,11 @@ alert group in `terraform/grafana/alerts.tf` raises:
 - **Backup failed** — `resticprofile_backup_status` is 0 (1 is a warning, 2 a success).
 - **Backup stale** — a profile's metrics file has not been written in over 26 hours, i.e. the
   timer has stopped.
+
+The `maintenance` profile writes `maintenance.prom`, which raises **Backup check failed** on a
+bad result and **Backup check stale** when over 8 days old. The Restore Test workflow's pushed
+result raises **Restore test failed** and **Restore test stale** the same way; with no result in
+Grafana at all, the stale alert fires.
 
 After the `immich` backup and its prune, a `run-finally` hook also writes `repository.prom`
 with the size of the whole repository in B2 (`restic stats --mode raw-data`). It goes stale,

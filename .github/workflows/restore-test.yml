@@ -1,0 +1,212 @@
+name: "Restore Test"
+
+on:
+  schedule:
+    # Sundays at 07:00 NZDT / 06:00 NZST (cron is UTC), after the 05:00 repository check
+    - cron: "0 18 * * 6"
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/restore-test.yml
+    branches:
+      - main
+
+concurrency:
+  group: "restore-test"
+
+# A snapshot existing doesn't mean it restores. This pulls real data back out of B2 with
+# `restic dump` and checks it, then posts the result to Alloy's OTLP receiver on the host
+# (etc/alloy/push.alloy) for the Restore test alerts in terraform/grafana/alerts.tf.
+#
+# Runs as the runner, no sudo, with the restic the Restic workflow installed and the jq and sqlite3
+# ansible/nuc.yml installs. Unlike the backups this needn't run without GitHub: a missed week raises
+# Restore test stale.
+#
+# Every job runs on the NUC's one runner (the `nuc` label), so they share files through a folder in
+# /tmp for this run: the snapshot listings, and each check's result for the report.
+env:
+  # The same repository as etc/resticprofile.yaml
+  RESTIC_REPOSITORY: "s3:s3.us-west-004.backblazeb2.com/tqid-dev-backup"
+  RESTIC_PASSWORD: ${{ secrets.RESTIC_PASSWORD }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.B2_APPLICATION_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+  IMMICH: "/mnt/unitek/immich/library"
+  SHARED: "/tmp/restore-test/${{ github.run_id }}"
+
+# An explicit bash runs with -eo pipefail, so a failed `restic dump` isn't hidden by what it's piped to
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # Each snapshot's file listing, as JSON lines, for the checks below
+  snapshots:
+    runs-on: [self-hosted, nuc]
+    outputs:
+      immich: ${{ steps.list.outputs.immich }}
+      immich-time: ${{ steps.list.outputs.immich-time }}
+      apps: ${{ steps.list.outputs.apps }}
+      databases: ${{ steps.list.outputs.databases }}
+    steps:
+      - name: "List the latest snapshots"
+        id: list
+        run: |
+          mkdir -p "${SHARED}/results"
+          for tag in immich apps; do
+            restic ls --json --tag "${tag}" --host "$(hostname)" latest > "${SHARED}/${tag}.json"
+            snapshot="$(jq -c 'select((.message_type // .struct_type) == "snapshot")' "${SHARED}/${tag}.json")"
+            echo "${tag}: snapshot $(jq -r '.short_id' <<< "${snapshot}") from $(jq -r '.time[:19]' <<< "${snapshot}")"
+            echo "${tag}=$(jq -r '.id' <<< "${snapshot}")" >> "${GITHUB_OUTPUT}"
+            echo "${tag}-time=$(jq -r '.time[:19]' <<< "${snapshot}")" >> "${GITHUB_OUTPUT}"
+          done
+
+          # The databases matrix: each file named by its folder or volume, e.g. radarr/radarr.db
+          databases="$(jq -sc '[.[] | select(.type == "file" and (.path | test("\\.(db|sqlite3?)$")))
+            | {name: (.path | sub("/_data/"; "/") | split("/") | .[-2:] | join("/")), path}]' "${SHARED}/apps.json")"
+          if [ "${databases}" = "[]" ]; then
+            echo "::error title=Nothing to check::No databases in the apps snapshot"
+            exit 1
+          fi
+          echo "databases=${databases}" >> "${GITHUB_OUTPUT}"
+
+  immich:
+    needs: snapshots
+    runs-on: [self-hosted, nuc]
+    env:
+      SNAPSHOT: ${{ needs.snapshots.outputs.immich }}
+      SNAPSHOT_TIME: ${{ needs.snapshots.outputs.immich-time }}
+    steps:
+      # 20 random photos and videos, 200MB or under so a run downloads hundreds of MB rather than GBs
+      - name: "Compare Immich originals with the live files"
+        run: |
+          checked=0 failed=0
+          while IFS=$'\t' read -r size path; do
+            # Deleted or replaced since the backup - nothing live to compare with
+            [ "$(stat -c %s "${path}" 2>/dev/null)" = "${size}" ] || continue
+            checked=$((checked + 1))
+            if [ "$(restic dump "${SNAPSHOT}" "${path}" | sha256sum)" != "$(sha256sum < "${path}")" ]; then
+              echo "::error title=Restored copy differs::${path}"
+              failed=$((failed + 1))
+            fi
+          done < <(jq -r --arg dirs "^${IMMICH}/(library|upload)/" '
+            select(.type == "file" and (.path | test($dirs)) and .size > 0 and .size <= 200 * 1024 * 1024)
+            | "\(.size)\t\(.path)"' "${SHARED}/immich.json" | shuf -n 20)
+
+          echo "${checked} ${failed}" > "${SHARED}/results/originals"
+          echo "${checked} compared, ${failed} differ"
+          if [ "${checked}" -eq 0 ]; then
+            echo "::error title=Nothing to compare::No Immich originals in the snapshot"
+            exit 1
+          fi
+          [ "${failed}" -eq 0 ]
+
+      # Immich dumps nightly, so a newest dump much older than the snapshot means its backup job stopped
+      - name: "Check the newest Immich database dump"
+        if: ${{ !cancelled() }}
+        run: |
+          # RFC 3339 from the same host, so the leading date and time sort as text
+          IFS=$'\t' read -r mtime path < <(jq -r --arg dir "${IMMICH}/backups/" '
+            select(.type == "file" and (.path | startswith($dir)) and (.path | endswith(".sql.gz")))
+            | "\(.mtime[:19])\t\(.path)"' "${SHARED}/immich.json" | sort | tail -n 1) || true
+          if [ -z "${path:-}" ]; then
+            echo "::error title=No dump::No Immich database dump in the snapshot"
+            exit 1
+          fi
+          echo "${path}, from ${mtime}"
+
+          dump="${RUNNER_TEMP}/immich.sql.gz"
+          restic dump "${SNAPSHOT}" "${path}" > "${dump}"
+          failed=0
+          age_days=$(( ($(date -d "${SNAPSHOT_TIME}" +%s) - $(date -d "${mtime}" +%s)) / 86400 ))
+          if [ "${age_days}" -gt 2 ]; then
+            echo "::error title=Dump is old::${path} is ${age_days} days older than the snapshot"
+            failed=1
+          fi
+          if ! gunzip --test "${dump}"; then
+            echo "::error title=Dump is corrupt::${path} doesn't decompress"
+            failed=1
+          # Read through a process substitution, so zcat being cut off by head doesn't fail the pipe
+          elif ! head -n 20 < <(zcat "${dump}") | grep -q "PostgreSQL database dump"; then
+            echo "::error title=Not a dump::${path} doesn't look like a pg_dump"
+            failed=1
+          fi
+          echo "1 ${failed}" > "${SHARED}/results/dump"
+          [ "${failed}" -eq 0 ]
+
+  # One job per database in the apps snapshot (Memos, Mealie, the arrs, Jellyfin...), so a corrupt one
+  # shows by name in the run graph
+  databases:
+    needs: snapshots
+    runs-on: [self-hosted, nuc]
+    name: "Database ${{ matrix.database.name }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        database: ${{ fromJSON(needs.snapshots.outputs.databases) }}
+    env:
+      SNAPSHOT: ${{ needs.snapshots.outputs.apps }}
+      DATABASE: ${{ matrix.database.path }}
+      RESULT: "results/database-${{ strategy.job-index }}"
+    steps:
+      - name: "Restore and check integrity"
+        run: |
+          db="${RUNNER_TEMP}/restored.db"
+          restic dump "${SNAPSHOT}" "${DATABASE}" > "${db}"
+          # Not every .db is SQLite
+          if [ "$(head -c 15 "${db}")" != "SQLite format 3" ]; then
+            echo "Not an SQLite database, skipped"
+            echo "0 0" > "${SHARED}/${RESULT}"
+            exit 0
+          fi
+          # immutable: read the file as restored, without looking for a -wal or taking locks
+          result="$(sqlite3 "file:${db}?immutable=1" "PRAGMA integrity_check" 2>&1)" || true
+          echo "${result}"
+          if [ "${result}" != "ok" ]; then
+            echo "::error title=Database corrupt::${DATABASE}: ${result}"
+            echo "1 1" > "${SHARED}/${RESULT}"
+            exit 1
+          fi
+          echo "1 0" > "${SHARED}/${RESULT}"
+
+  # Always, so a failed or broken run still reaches Grafana, and the shared folder is cleared
+  report:
+    needs: [snapshots, immich, databases]
+    if: ${{ always() }}
+    runs-on: [self-hosted, nuc]
+    steps:
+      # Gauges with no unit, so their names reach Prometheus as written here
+      - name: "Report the result to Grafana"
+        env:
+          RESULTS: ${{ needs.snapshots.result }} ${{ needs.immich.result }} ${{ needs.databases.result }}
+        run: |
+          success=1
+          for result in ${RESULTS}; do
+            [ "${result}" = "success" ] || success=0
+          done
+          # Each check wrote "<checked> <failed>"
+          read -r checked failures < <(cat "${SHARED}"/results/* 2>/dev/null | awk '{c += $1; f += $2} END {print c + 0, f + 0}')
+
+          jq -n --arg host "$(hostname)" --arg now "$(date +%s%N)" \
+            --argjson success "${success}" --argjson checked "${checked}" --argjson failures "${failures}" '
+            {
+              resticprofile_restore_test_success: $success,
+              resticprofile_restore_test_files_checked: $checked,
+              resticprofile_restore_test_failures: $failures,
+              resticprofile_restore_test_time_seconds: ($now[:-9] | tonumber)
+            }
+            | {resourceMetrics: [{
+                resource: {attributes: [
+                  {key: "service.name", value: {stringValue: "restore-test"}},
+                  {key: "service.instance.id", value: {stringValue: $host}}
+                ]},
+                scopeMetrics: [{metrics: [to_entries[] | {
+                  name: .key,
+                  gauge: {dataPoints: [{asInt: (.value | tostring), timeUnixNano: $now}]}
+                }]}]
+              }]}' |
+            curl -fsS -H "Content-Type: application/json" --data-binary @- "http://127.0.0.1:4318/v1/metrics"
+          echo "${checked} files checked, ${failures} failed (jobs: ${RESULTS})"
+
+      - name: "Remove the shared folder"
+        if: ${{ always() }}
+        run: rm -rf "${SHARED}"
