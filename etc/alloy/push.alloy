@@ -1,0 +1,33 @@
+// Results pushed by jobs on the host rather than scraped: the weekly restore test
+// (.github/workflows/restore-test.yml) -> Prometheus.
+//
+// OTLP over HTTP on loopback only. Alloy shares the host's network, and containers have their
+// own loopback, so only processes on the host itself - the runner - can reach it.
+
+otelcol.receiver.otlp "push" {
+	http {
+		endpoint = "127.0.0.1:4318"
+	}
+
+	output {
+		metrics = [otelcol.exporter.prometheus.push.input]
+	}
+}
+
+// service.name and service.instance.id become job and instance; the rest of the resource is
+// target_info, which isn't needed.
+otelcol.exporter.prometheus "push" {
+	include_target_info = false
+	forward_to          = [prometheus.relabel.push.receiver]
+}
+
+// Only the expected metrics, so a stray push can't spend the free tier's series budget.
+prometheus.relabel "push" {
+	rule {
+		source_labels = ["__name__"]
+		regex         = "resticprofile_restore_test_(success|files_checked|failures|time_seconds)"
+		action        = "keep"
+	}
+
+	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
