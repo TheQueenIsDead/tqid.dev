@@ -669,6 +669,36 @@ locals {
       description = "The last restic check result is {{ humanize $values.A.Value }} days old. Check `systemctl list-timers 'resticprofile-*'` on nuc."
     }
 
+    # Pushed once a week by the Restore Test workflow (.github/workflows/restore-test.yml) through
+    # Alloy's OTLP receiver. Each result is a single sample, which instant queries stop seeing after
+    # 5 minutes, so these look back over the last 9 days for the latest one.
+    "Restore test failed" = {
+      datasource  = "prometheus"
+      panel       = ["backups", "Restore test"]
+      expr        = "last_over_time(resticprofile_restore_test_success[9d])"
+      threshold   = 1
+      comparison  = "lt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "critical"
+      summary     = "Backup restore test failed"
+      description = "Files restored from Backblaze didn't check out. The failures are annotated on the last Restore Test workflow run."
+    }
+
+    # No result at all in the last 9 days counts as stale too, rather than as no data
+    "Restore test stale" = {
+      datasource  = "prometheus"
+      panel       = ["backups", "Restore test"]
+      expr        = "(time() - (max(last_over_time(resticprofile_restore_test_time_seconds[9d])) or vector(0))) / 86400"
+      threshold   = 8
+      comparison  = "gt"
+      for         = "15m"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "Backup restore test hasn't run in over a week"
+      description = "The last restore test result is {{ humanize $values.A.Value }} days old. Check the Restore Test workflow in GitHub Actions, and that the self-hosted runner is up."
+    }
+
     # Compressed bytes the last run added to B2. Runs are normally under 1GB; ransomware encrypting files
     # changes everything at once (and doesn't compress), as does something big landing in a backed-up path.
     # Stays firing until the next normal run.

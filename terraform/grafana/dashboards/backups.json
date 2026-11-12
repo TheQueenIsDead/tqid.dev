@@ -54,7 +54,7 @@
       "gridPos": {
         "x": 0,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "datasource": {
@@ -140,9 +140,9 @@
       "title": "Since last backup",
       "description": "Backups run daily; over 26h means the timer has stopped (the Backup stale alert).",
       "gridPos": {
-        "x": 4,
+        "x": 3,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "datasource": {
@@ -204,9 +204,9 @@
       "title": "Duration",
       "description": "",
       "gridPos": {
-        "x": 8,
+        "x": 6,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "datasource": {
@@ -264,7 +264,7 @@
       "title": "Uploaded to B2",
       "description": "New data the last run wrote to the repository, after deduplication and compression. This is what B2 stores and bills.",
       "gridPos": {
-        "x": 12,
+        "x": 9,
         "y": 1,
         "w": 4,
         "h": 4
@@ -324,9 +324,9 @@
       "title": "Source size",
       "description": "Total size of everything the profile backs up, before deduplication.",
       "gridPos": {
-        "x": 16,
+        "x": 13,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "datasource": {
@@ -384,7 +384,7 @@
       "title": "Repository check",
       "description": "Weekly `restic check --read-data-subset 5%`, which reads back a slice of the packs in B2 to catch bit rot.",
       "gridPos": {
-        "x": 20,
+        "x": 16,
         "y": 1,
         "w": 4,
         "h": 4
@@ -407,6 +407,129 @@
         },
         {
           "expr": "(time() - node_textfile_mtime_seconds{file=~\".*maintenance.prom\"})",
+          "legendFormat": "Age",
+          "instant": true,
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Failed",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "OK",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Age"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              },
+              {
+                "id": "mappings",
+                "value": []
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 691200
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Restore test",
+      "description": "Weekly: a sample of Immich originals hashed against the live files, every app's SQLite database through `PRAGMA integrity_check`, and the newest Immich database dump decompressed. Run weekly by the Restore Test workflow; failures are annotated on its run.",
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(resticprofile_restore_test_success[9d])",
+          "legendFormat": "Test",
+          "instant": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "range": false
+        },
+        {
+          "expr": "time() - max(last_over_time(resticprofile_restore_test_time_seconds[9d]))",
           "legendFormat": "Age",
           "instant": true,
           "refId": "B",
