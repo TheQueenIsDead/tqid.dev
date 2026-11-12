@@ -247,18 +247,6 @@
           LogLevel VERBOSE
       notify: "Reload sshd"
 
-    # The browser shell briefly trusted Cloudflare Access's SSH certificates, which went unused (see
-    # terraform/cloudflare/ssh.tf). Removes what that left on the host; safe to delete once applied.
-    - name: "Remove Cloudflare Access SSH certificate trust"
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: "absent"
-      loop:
-        - "/etc/ssh/sshd_config.d/cloudflare-access.conf"
-        - "/etc/ssh/cloudflare-ca.pub"
-        - "/etc/ssh/principals"
-      notify: "Reload sshd"
-
     # Managed here so changes go through the repo. Running ansible-playbook as root is
     # effectively full root, as is `install` - and the runner already is, through the Docker
     # socket. What keeps it safe is that only pushes to main run on the self-hosted runner.
