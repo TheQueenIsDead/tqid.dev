@@ -42,6 +42,14 @@
       // https://docs.renovatebot.com/configuration-options/#ignoretests
       "ignoreTests": true,
     },
+    // Provider patches only. The Terraform Cloud check is a speculative plan, which passes
+    // whatever the plan would change, and merging to main applies it.
+    {
+      "matchManagers": ["terraform"],
+      "matchDepTypes": ["required_provider"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+    },
     // Alloy does have a check (Alloy Validate), so wait for it
     {
       "matchFileNames": ["docker/alloy.yml"],
