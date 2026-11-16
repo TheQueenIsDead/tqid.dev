@@ -6,6 +6,20 @@ locals {
     usage = { type = "prometheus", uid = "grafanacloud-usage" }
   }
 
+  # Explore, opened on the last hour of Tdarr transcode reports: each file received, then for failed ones
+  # the line that says why and the verdict.
+  tdarr_failures_url = "${var.grafana_url}/explore?schemaVersion=1&panes=${urlencode(jsonencode({
+    a = {
+      datasource = local.datasources.loki.uid
+      queries = [{
+        refId      = "A"
+        datasource = local.datasources.loki
+        expr       = "{job=\"tdarr/job-reports\", type=\"transcode\"} |~ `Received file|^Ratio is greater than threshold|^Error: |failFlow: |verdict: transcodeError`"
+      }]
+      range = { from = "now-1h", to = "now" }
+    }
+  }))}"
+
   # Golden-signal error alerts for applications, built from the telemetry shipped by etc/alloy.
   # `expr` must return the value compared against `threshold`; `no_data` applies when it returns nothing.
   # `panel` (optional) is the [dashboard, panel title] in dashboards/ that the alert shows on.
@@ -147,25 +161,44 @@ locals {
       description = "{{ $labels.client }} was refused {{ $values.A.Value }} times by {{ $labels.RequestHost }} in the last 10m. If it isn't you, block it in Cloudflare (Security > WAF > Tools)."
     }
 
-    # From tdarr-exporter: how many files' last transcode or health check failed. These are snapshot
-    # counts, so a rise over the last hour means new failures (requeueing a file lowers it again).
-    "Tdarr jobs failing" = {
-      datasource  = "prometheus"
-      panel       = ["overview", "Transcode errors"]
+    # From Tdarr's job reports: failed transcodes, by the line that says why. Tdarr reports every failure as
+    # "FFmpeg failed" or "Forcing flow to fail!", so the cause is the size check cancelling the job, a Fail
+    # Flow plugin's name, or another "Error:" line. Failures with none of these still alert, as unrecognised.
+    "Tdarr transcode failing" = {
+      datasource  = "loki"
+      panel       = ["transcoding", "Job errors"]
       expr        = <<-EOT
-        sum by (kind) (
-          label_replace(delta(tdarr_library_transcodes{status="error"}[1h]), "kind", "transcode", "", "")
-          or
-          label_replace(delta(tdarr_library_health_checks{status="error"}[1h]), "kind", "health check", "", "")
-        )
+        sum by (reason) (count_over_time({job="tdarr/job-reports", type="transcode"}
+          |~ `^(Error: |Ratio is greater than threshold|\[Step W03\] .*failFlow: )`
+          !~ `^Error: (FFmpeg failed|Forcing flow to fail!)`
+          | regexp `^(Error: (?P<error>.+)|(?P<ratio>Ratio is greater than threshold: \d+%)|.*failFlow: Fail Flow \((?P<failflow>[^)]*)\))`
+          | label_format reason=`{{ or .failflow .ratio .error | trunc 120 }}`
+          [1h]))
+        or on()
+        label_replace(sum(count_over_time({job="tdarr/job-reports", type="transcode"} |= "verdict: transcodeError" [1h])), "reason", "unrecognised", "", "")
       EOT
+      threshold   = 0
+      comparison  = "gt"
+      for         = "0s"
+      no_data     = "OK"
+      severity    = "warning"
+      summary     = "{{ $labels.reason }}"
+      description = "{{ $values.A.Value }} Tdarr transcodes failed with this in the last hour. [See which files](${local.tdarr_failures_url})"
+    }
+
+    # From tdarr-exporter: how many files' last health check failed. A snapshot count, so a rise over the
+    # last hour means new failures (requeueing a file lowers it again).
+    "Tdarr health checks failing" = {
+      datasource  = "prometheus"
+      panel       = ["overview", "Health check errors"]
+      expr        = "delta(tdarr_library_health_checks{status=\"error\"}[1h])"
       threshold   = 0.5
       comparison  = "gt"
       for         = "0s"
       no_data     = "OK"
       severity    = "warning"
-      summary     = "Tdarr {{ $labels.kind }}s are failing"
-      description = "{{ humanize $values.A.Value }} more files failed their {{ $labels.kind }} in the last hour. Tdarr lists them under the library's error tab; their job reports are in Loki under {job=\"tdarr/job-reports\"}."
+      summary     = "Files are failing their health check"
+      description = "{{ printf \"%.0f\" $values.A.Value }} more files failed their Tdarr health check in the last hour. Tdarr lists them under the library's error tab; their job reports are in Loki under {job=\"tdarr/job-reports\", type=\"healthcheck\"}."
     }
 
     # From Tdarr's job reports: a transcode whose ffmpeg command uses a CPU encoder. Tdarr's encoder plugin
@@ -790,7 +823,7 @@ resource "grafana_rule_group" "tqid" {
         contact_point = "Discord"
         # One notification per affected thing, so the Discord template's CommonAnnotations are populated.
         # Listed explicitly rather than "..." so Grafana's internal labels don't end up in the title.
-        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file", "chip", "sensor", "client", "RequestHost", "measure", "kind", "encoder"]
+        group_by = ["alertname", "service", "container", "job", "instance", "mountpoint", "device", "reason", "profile", "file", "chip", "sensor", "client", "RequestHost", "measure", "encoder"]
 
         group_wait      = local.notification_timing.group_wait
         group_interval  = local.notification_timing.group_interval
