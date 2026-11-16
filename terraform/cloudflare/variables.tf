@@ -20,23 +20,25 @@ variable "subdomains" {
   type = set(object({
     name   = string
     public = optional(bool, false)
+    # App Launcher logo: a dashboard-icons name (defaults to `name`) or a full image URL
+    logo = optional(string)
   }))
   default = [
-    { name = "budge" },
-    { name = "chat", public = true },
+    { name = "budge", logo = "https://cdn.jsdelivr.net/gh/TheQueenIsDead/budge@main/web/public/favicon.ico" },
+    { name = "chat", public = true, logo = "https://cdn.jsdelivr.net/gh/jdecked/twemoji@v17.0.3/assets/72x72/1f4ac.png" },
     { name = "cleanuparr" },
-    { name = "files" },
+    { name = "files", logo = "filebrowser-quantum" },
     { name = "jellyfin", public = true },
-    { name = "jellyseer", public = true },
+    { name = "jellyseer", public = true, logo = "seerr" },
     { name = "memos" },
     { name = "portainer" },
-    { name = "photos", public = true },
+    { name = "photos", public = true, logo = "immich" },
     { name = "prowlarr" },
     { name = "qbittorrent" },
     { name = "radarr" },
-    { name = "recipes" },
+    { name = "recipes", logo = "mealie" },
     { name = "sonarr" },
-    { name = "speed", public = true },
+    { name = "speed", public = true, logo = "librespeed" },
     { name = "sportarr" },
     { name = "tdarr" },
     { name = "traefik" },

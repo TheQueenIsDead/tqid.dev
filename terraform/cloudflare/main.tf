@@ -20,6 +20,9 @@ data "cloudflare_zero_trust_tunnel_cloudflared" "nuc" {
 }
 
 locals {
+  # App Launcher logos from https://github.com/homarr-labs/dashboard-icons, pinned to a commit
+  icons = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@d767d7327db7f8ebd3715b552523f61889eea41c/png"
+
   github_idp_id = one([
     for idp in data.cloudflare_zero_trust_access_identity_providers.this.result : idp.id if idp.name == "GitHub"
   ])
@@ -52,6 +55,7 @@ resource "cloudflare_zero_trust_access_application" "this" {
   session_duration          = "24h"
   auto_redirect_to_identity = false
   app_launcher_visible      = true
+  logo_url                  = startswith(coalesce(each.value.logo, each.value.name), "https://") ? each.value.logo : "${local.icons}/${coalesce(each.value.logo, each.value.name)}.png"
   allowed_idps              = [local.github_idp_id]
   policies = [{
     id         = each.value.public ? cloudflare_zero_trust_access_policy.public.id : cloudflare_zero_trust_access_policy.github.id

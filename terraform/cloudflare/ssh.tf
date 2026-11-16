@@ -15,6 +15,7 @@ resource "cloudflare_zero_trust_access_application" "ssh" {
   session_duration          = "4h"
   auto_redirect_to_identity = true
   app_launcher_visible      = true
+  logo_url                  = "${local.icons}/terminal.png"
   allowed_idps              = [local.github_idp_id]
   policies = [{
     id         = cloudflare_zero_trust_access_policy.github.id
