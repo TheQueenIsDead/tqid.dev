@@ -63,7 +63,7 @@ services:
       - backend
 
   sportarr:
-    image: "sportarr/sportarr:4.1.11.1121"
+    image: "sportarr/sportarr:4.1.12.1122"
     container_name: "sportarr"
     restart: "unless-stopped"
     environment:
