@@ -1,0 +1,20 @@
+name: "GitLab Runner"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/gitlab-runner.yml
+      - docker/gitlab-runner.yml
+      - etc/gitlab-runner/**
+    branches:
+      - main
+
+jobs:
+  gitlab-runner:
+    runs-on: self-hosted
+    env:
+      GITLAB_RUNNER_TOKEN: ${{ secrets.gitlab_runner_token }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker compose -f docker/gitlab-runner.yml up --wait
