@@ -1,0 +1,30 @@
+name: "gitlab-runner"
+
+# GitLab Runner for the lotly GitLab group (CI for lotly/lotly), so its pipelines don't depend on
+# GitLab.com's shared-runner compute minutes. Registered as a group runner that also takes
+# untagged jobs, so no .gitlab-ci.yml changes were needed. Setup and trade-offs: docs/GITLAB.md.
+#
+# Jobs run with the Docker executor: each job is a sibling container started through the Docker
+# socket. Job containers never get the socket themselves and aren't privileged; only this runner
+# container has it.
+services:
+  gitlab-runner:
+    image: "gitlab/gitlab-runner:alpine-v18.5.0"
+    container_name: "gitlab-runner"
+    restart: "unless-stopped"
+    environment:
+      - "GITLAB_RUNNER_TOKEN=${GITLAB_RUNNER_TOKEN}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      # Mounted beside the real config rather than over it: the runner writes to its config
+      # directory, and the token has to be filled in first.
+      - "../etc/gitlab-runner/config.toml:/etc/gitlab-runner/config.template.toml:ro"
+    # The runner itself is a small Go process; the jobs are where the memory goes (capped in
+    # etc/gitlab-runner/config.toml).
+    mem_limit: "256m"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        sed "s|__TOKEN__|$${GITLAB_RUNNER_TOKEN:?GITLAB_RUNNER_TOKEN is not set}|"
+        /etc/gitlab-runner/config.template.toml > /etc/gitlab-runner/config.toml
+        && exec gitlab-runner run --config /etc/gitlab-runner/config.toml --working-directory /home/gitlab-runner

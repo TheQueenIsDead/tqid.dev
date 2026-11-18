@@ -1,0 +1,30 @@
+# GitLab Runner config for the lotly group (docker/gitlab-runner.yml, docs/GITLAB.md).
+# The runner can't read its token from the environment, so `token` is a placeholder that the
+# container replaces with the GITLAB_RUNNER_TOKEN env var on start, writing the result to its own config.toml.
+
+# One job at a time: the NUC has 8 GB and Tdarr, Immich and the rest come first.
+concurrent = 1
+check_interval = 5
+shutdown_timeout = 300
+
+[[runners]]
+  name = "nuc"
+  url = "https://gitlab.com"
+  token = "__TOKEN__"
+  executor = "docker"
+  [runners.docker]
+    image = "alpine:3.22"
+    privileged = false
+    disable_cache = false
+    # Job caches (pub, pnpm) live in a Docker volume per project between jobs.
+    volumes = ["/cache"]
+    # The Flutter CI image is 2.3 GB: keep it rather than pulling it for every job.
+    pull_policy = ["if-not-present"]
+    # Per-job caps, same idea as Tdarr: a runaway build is OOM-killed instead of taking the NUC
+    # down. Swap capped at the same value so it fails fast instead of thrashing.
+    memory = "3g"
+    memory_swap = "3g"
+    cpus = "2"
+    # Default is 1024; lower means CI yields the CPU to everything else under contention.
+    cpu_shares = 256
+    shm_size = 268435456

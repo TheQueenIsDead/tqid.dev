@@ -74,7 +74,7 @@
         #   -r 3600:    log memory stats hourly rather than every minute
         #   --avoid:    process names to kill only as a last resort - the way in, and deploys
         content: |
-          EARLYOOM_ARGS="-m 5 -s 10 -r 3600 --avoid ^(cloudflared|traefik|Runner[.]Listener|Runner[.]Worker|dockerd|containerd|sshd|systemd.*)$"
+          EARLYOOM_ARGS="-m 5 -s 10 -r 3600 --avoid ^(cloudflared|traefik|Runner[.]Listener|Runner[.]Worker|gitlab-runner|dockerd|containerd|sshd|systemd.*)$"
       notify: "Restart earlyoom"
 
     - name: "Enable earlyoom"
