@@ -25,7 +25,7 @@ read its token from the environment, so that file has a placeholder and the cont
 The NUC has 8 GB, so CI is kept from crowding out everything else:
 
 - one job at a time (`concurrent = 1`)
-- each job capped at 3 GB of memory (swap included) and 2 CPUs
+- each job capped at 4.5 GB of memory (swap included) and 2 CPUs
 - jobs get a low CPU share (256 vs Docker's default 1024)
 - earlyoom (`ansible/nuc.yml`) avoids killing the runner process itself; job containers are fair
   game

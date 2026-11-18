@@ -21,9 +21,10 @@ shutdown_timeout = 300
     # The Flutter CI image is 2.3 GB: keep it rather than pulling it for every job.
     pull_policy = ["if-not-present"]
     # Per-job caps, same idea as Tdarr: a runaway build is OOM-killed instead of taking the NUC
-    # down. Swap capped at the same value so it fails fast instead of thrashing.
-    memory = "3g"
-    memory_swap = "3g"
+    # down. Swap capped at the same value so it fails fast instead of thrashing. 4.5 GB because
+    # Flutter's web compile (dart2js) alone peaks around 2.8 GB, and was killed at 3 GB.
+    memory = "4608m"
+    memory_swap = "4608m"
     cpus = "2"
     # Default is 1024; lower means CI yields the CPU to everything else under contention.
     cpu_shares = 256
