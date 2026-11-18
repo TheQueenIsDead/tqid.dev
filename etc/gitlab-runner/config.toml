@@ -2,8 +2,7 @@
 # The runner can't read its token from the environment, so `token` is a placeholder that the
 # container replaces with the GITLAB_RUNNER_TOKEN env var on start, writing the result to its own config.toml.
 
-# One job at a time: the NUC has 8 GB and Tdarr, Immich and the rest come first.
-concurrent = 1
+concurrent = 2
 check_interval = 5
 shutdown_timeout = 300
 
