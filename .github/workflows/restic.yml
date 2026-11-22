@@ -42,7 +42,7 @@ jobs:
       # renovate: datasource=github-releases depName=restic/restic extractVersion=^v(?<version>.+)$
       RESTIC_VERSION: "0.19.1"
       # renovate: datasource=github-releases depName=creativeprojects/resticprofile
-      RESTICPROFILE_VERSION: "v0.33.1"
+      RESTICPROFILE_VERSION: "v0.34.0"
       CONFIG: "/etc/resticprofile/profiles.yaml"
     steps:
       - uses: actions/checkout@v7
