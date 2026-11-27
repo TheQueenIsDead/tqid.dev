@@ -40,7 +40,7 @@ jobs:
     runs-on: self-hosted
     env:
       # renovate: datasource=github-releases depName=restic/restic extractVersion=^v(?<version>.+)$
-      RESTIC_VERSION: "0.19.1"
+      RESTIC_VERSION: "0.20.0"
       # renovate: datasource=github-releases depName=creativeprojects/resticprofile
       RESTICPROFILE_VERSION: "v0.34.0"
       CONFIG: "/etc/resticprofile/profiles.yaml"
